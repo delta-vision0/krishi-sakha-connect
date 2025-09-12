@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
 import { CropRecommendation } from '@/components/CropRecommendation';
@@ -11,7 +11,14 @@ import { GeminiModal } from '@/components/GeminiModal';
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [isGeminiOpen, setIsGeminiOpen] = useState(false);
-
+ 
+  useEffect(() => {
+    if (activeView === 'ai') {
+      setIsGeminiOpen(true);
+      setActiveView('dashboard');
+    }
+  }, [activeView]);
+ 
   const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
@@ -23,7 +30,6 @@ const Index = () => {
       case 'prices':
         return <MarketPrices />;
       case 'ai':
-        setIsGeminiOpen(true);
         return <Dashboard onNavigate={setActiveView} />;
       default:
         return <Dashboard onNavigate={setActiveView} />;
