@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { Sparkles, TrendingUp, Eye } from 'lucide-react';
+import { Sparkles, TrendingUp, Eye, ArrowLeft } from 'lucide-react';
 
-export const CropRecommendation = () => {
+interface CropRecommendationProps {
+  onBack: () => void;
+}
+
+export const CropRecommendation = ({ onBack }: CropRecommendationProps) => {
   const [showRecommendations, setShowRecommendations] = useState(false);
 
   const recommendations = [
@@ -29,8 +33,20 @@ export const CropRecommendation = () => {
   ];
 
   return (
-    <div id="crop-rec" className="space-y-6 fade-in">
-      {!showRecommendations ? (
+    <div className="fade-in">
+      {/* Header with back button */}
+      <div className="flex items-center mb-6">
+        <button 
+          onClick={onBack}
+          className="mr-3 p-2 rounded-lg hover:bg-accent transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="heading-2">Crop Recommendation</h1>
+      </div>
+
+      <div id="crop-rec" className="space-y-6">
+        {!showRecommendations ? (
         <div className="krishi-card text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Sparkles className="w-8 h-8 text-primary" />
@@ -89,7 +105,8 @@ export const CropRecommendation = () => {
             </button>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

@@ -23,6 +23,8 @@ const Index = () => {
     switch (activeView) {
       case 'dashboard':
         return <Dashboard onNavigate={setActiveView} />;
+      case 'crop-recommendation':
+        return <CropRecommendation onBack={() => setActiveView('dashboard')} />;
       case 'fertilizer':
         return <FertilizerAdvisor />;
       case 'scanner':
@@ -42,7 +44,6 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-6 max-w-4xl">
         {renderActiveView()}
-        <CropRecommendation />
       </main>
 
       <BottomNavigation activeView={activeView} onNavigate={setActiveView} />
