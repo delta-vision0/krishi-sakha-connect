@@ -1,12 +1,49 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React, { useState } from 'react';
+import { Header } from '@/components/Header';
+import { Dashboard } from '@/components/Dashboard';
+import { CropRecommendation } from '@/components/CropRecommendation';
+import { FertilizerAdvisor } from '@/components/FertilizerAdvisor';
+import { PestDetection } from '@/components/PestDetection';
+import { MarketPrices } from '@/components/MarketPrices';
+import { BottomNavigation } from '@/components/BottomNavigation';
+import { GeminiModal } from '@/components/GeminiModal';
 
 const Index = () => {
+  const [activeView, setActiveView] = useState('dashboard');
+  const [isGeminiOpen, setIsGeminiOpen] = useState(false);
+
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'dashboard':
+        return <Dashboard onNavigate={setActiveView} />;
+      case 'fertilizer':
+        return <FertilizerAdvisor />;
+      case 'scanner':
+        return <PestDetection onOpenGemini={() => setIsGeminiOpen(true)} />;
+      case 'prices':
+        return <MarketPrices />;
+      case 'ai':
+        setIsGeminiOpen(true);
+        return <Dashboard onNavigate={setActiveView} />;
+      default:
+        return <Dashboard onNavigate={setActiveView} />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background pb-20">
+      <Header />
+      
+      <main className="container mx-auto px-4 py-6 max-w-4xl">
+        {renderActiveView()}
+        <CropRecommendation />
+      </main>
+
+      <BottomNavigation activeView={activeView} onNavigate={setActiveView} />
+      
+      {isGeminiOpen && (
+        <GeminiModal onClose={() => setIsGeminiOpen(false)} />
+      )}
     </div>
   );
 };

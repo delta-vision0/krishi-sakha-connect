@@ -1,42 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Krishi Sakha Design System - Agricultural UI focused on farmers */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Base colors */
+    --background: 210 20% 98%;
+    --foreground: 210 8% 15%;
 
+    /* Agricultural green palette */
+    --primary: 123 38% 35%;        /* Deep green for main brand */
+    --primary-light: 123 38% 45%;  /* Lighter green for hover states */
+    --primary-dark: 123 38% 25%;   /* Darker green for active states */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary earth tones */
+    --secondary: 45 25% 85%;       /* Light beige/cream */
+    --secondary-foreground: 210 8% 15%;
+
+    /* Status colors */
+    --success: 123 38% 35%;        /* Green for success */
+    --success-light: 123 35% 92%;  /* Very light green background */
+    --warning: 48 95% 53%;         /* Yellow for alerts */
+    --warning-light: 48 100% 95%;  /* Light yellow background */
+    --danger: 0 72% 51%;           /* Red for errors */
+    
+    /* Neutral palette */
+    --muted: 210 20% 95%;          /* Light gray backgrounds */
+    --muted-foreground: 210 8% 45%;
+    --accent: 210 20% 92%;
+    --accent-foreground: 210 8% 15%;
+
+    /* Card system */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 8% 15%;
+    --card-shadow: 210 20% 85%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Interactive elements */
+    --border: 210 20% 88%;
+    --input: 0 0% 100%;
+    --ring: 123 38% 35%;
+    
+    /* Agricultural gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(123 38% 35%), hsl(123 38% 45%));
+    --gradient-earth: linear-gradient(135deg, hsl(45 25% 85%), hsl(45 25% 90%));
+    --gradient-sky: linear-gradient(135deg, hsl(210 50% 88%), hsl(210 50% 92%));
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    /* Spacing and layout */
+    --radius: 0.75rem;
+    --container-padding: 1rem;
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +120,122 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
+  }
+}
+
+@layer components {
+  /* Agricultural Card System */
+  .krishi-card {
+    @apply bg-card border border-border rounded-xl shadow-md p-6 transition-all duration-300;
+  }
+  
+  .krishi-card:hover {
+    @apply shadow-lg transform translate-y-[-2px];
+  }
+
+  /* Button Variants for Farming Interface */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-4 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg active:scale-95;
+  }
+  
+  .btn-success {
+    @apply bg-success text-white hover:bg-success/90 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+  
+  .btn-warning {
+    @apply bg-warning text-gray-900 hover:bg-warning/90 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  /* Status Indicators */
+  .status-success {
+    @apply bg-success-light text-success border border-success/20 px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .status-warning {
+    @apply bg-warning-light text-orange-800 border border-warning/20 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  /* Weather Widget Styling */
+  .weather-widget {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6;
+  }
+  
+  /* Alert Box for Farming Notifications */
+  .farm-alert {
+    @apply bg-warning-light border border-warning/30 rounded-lg p-4 flex items-center gap-3;
+  }
+
+  /* Navigation Styles */
+  .bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 bg-white border-t border-border px-4 py-2 z-50;
+  }
+  
+  .nav-item {
+    @apply flex-1 flex flex-col items-center gap-1 py-2 px-2 rounded-lg transition-colors duration-200;
+  }
+  
+  .nav-item.active {
+    @apply bg-primary/10 text-primary;
+  }
+  
+  .nav-item:not(.active) {
+    @apply text-muted-foreground hover:text-primary hover:bg-primary/5;
+  }
+
+  /* Input Styles for Farming Forms */
+  .farm-input {
+    @apply w-full px-4 py-3 bg-input border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200;
+  }
+  
+  .farm-select {
+    @apply w-full px-4 py-3 bg-input border border-border rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 cursor-pointer;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4;
+  }
+  
+  .modal-content {
+    @apply bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden;
+  }
+
+  /* Typography Scale for Farming UI */
+  .heading-1 {
+    @apply text-3xl md:text-4xl font-bold text-foreground;
+  }
+  
+  .heading-2 {
+    @apply text-2xl md:text-3xl font-semibold text-foreground;
+  }
+  
+  .heading-3 {
+    @apply text-xl md:text-2xl font-semibold text-foreground;
+  }
+  
+  .body-large {
+    @apply text-lg text-foreground;
+  }
+  
+  .body-text {
+    @apply text-base text-foreground;
+  }
+  
+  .caption {
+    @apply text-sm text-muted-foreground;
+  }
+
+  /* Animation Classes */
+  .fade-in {
+    @apply animate-in fade-in duration-300;
+  }
+  
+  .slide-up {
+    @apply animate-in slide-in-from-bottom-4 fade-in duration-300;
+  }
+  
+  .scale-in {
+    @apply animate-in zoom-in-95 fade-in duration-200;
   }
 }
