@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krishi Sakha - Smart Farming Assistant</title>
+    <meta name="description" content="AI-powered farming assistant for Indian farmers. Get crop recommendations, fertilizer advice, pest detection, and market prices.">
+    <meta name="author" content="Krishi Sakha">
+    
+    <meta property="og:title" content="Krishi Sakha - Smart Farming Assistant">
+    <meta property="og:description" content="AI-powered farming assistant for Indian farmers. Get crop recommendations, fertilizer advice, pest detection, and market prices.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@lovable_dev">
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png">
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1 class="header-title">Krishi Sakha</h1>
+                    <p class="header-subtitle">Your Smart Farming Assistant</p>
+                </div>
+                <div class="location">
+                    <svg class="location-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span>Ichalkaranji, MH</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="dashboard">
+                <div class="weather-widget">
+                    <h2 class="weather-title">Today's Weather</h2>
+                    <div class="weather-content">
+                        <div class="weather-main">
+                            <div class="weather-temp">28°C</div>
+                            <div class="weather-desc">Partly Cloudy</div>
+                        </div>
+                        <div class="weather-details">
+                            <div class="weather-detail">
+                                <span class="weather-label">Humidity</span>
+                                <span class="weather-value">65%</span>
+                            </div>
+                            <div class="weather-detail">
+                                <span class="weather-label">Wind</span>
+                                <span class="weather-value">12 km/h</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card" onclick="showCropRecommendation()">
+                        <div class="card-icon">🌾</div>
+                        <h3 class="card-title">Crop Recommendation</h3>
+                        <p class="card-description">Get AI-powered crop suggestions based on your soil and climate</p>
+                    </div>
+                    
+                    <div class="dashboard-card" onclick="showFertilizer()">
+                        <div class="card-icon">🧪</div>
+                        <h3 class="card-title">Fertilizer Advisor</h3>
+                        <p class="card-description">Optimize your fertilizer usage for better yield</p>
+                    </div>
+                    
+                    <div class="dashboard-card" onclick="showScanner()">
+                        <div class="card-icon">🔍</div>
+                        <h3 class="card-title">Pest Detection</h3>
+                        <p class="card-description">Identify and treat crop diseases early</p>
+                    </div>
+                    
+                    <div class="dashboard-card" onclick="showPrices()">
+                        <div class="card-icon">📈</div>
+                        <h3 class="card-title">Market Prices</h3>
+                        <p class="card-description">Check current market rates for your crops</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crop Recommendation Section -->
+            <div id="crop-recommendation" class="section hidden">
+                <div class="section-header">
+                    <button class="back-btn" onclick="showDashboard()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m12 19-7-7 7-7"></path>
+                            <path d="M19 12H5"></path>
+                        </svg>
+                    </button>
+                    <h1 class="section-title">Crop Recommendation</h1>
+                </div>
+
+                <div id="crop-initial" class="card text-center">
+                    <div class="card-icon-large">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="card-heading">Get Smart Crop Recommendations</h2>
+                    <p class="card-text">Based on your location, soil type, and weather patterns, we'll recommend the best crops for maximum yield.</p>
+                    <button class="btn-primary" onclick="showRecommendations()">🌿 Get Crop Recommendation</button>
+                </div>
+
+                <div id="crop-results" class="hidden">
+                    <div class="card">
+                        <h2 class="card-heading">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
+                            </svg>
+                            Recommended Crops for Your Region
+                        </h2>
+                        <p class="card-subtitle">Based on Ichalkaranji, Maharashtra conditions</p>
+                        
+                        <div class="recommendations">
+                            <div class="recommendation-item">
+                                <div class="recommendation-header">
+                                    <div>
+                                        <h3 class="recommendation-crop">Maize 🌽</h3>
+                                        <span class="status-success">Highly Suitable</span>
+                                    </div>
+                                    <div class="recommendation-revenue">
+                                        <div class="revenue-amount">₹45,000 per hectare</div>
+                                        <div class="revenue-label">Expected Revenue</div>
+                                    </div>
+                                </div>
+                                <div class="recommendation-footer">
+                                    <div class="recommendation-details">
+                                        <span class="detail">Season: Kharif</span>
+                                        <span class="detail">Confidence: 95%</span>
+                                    </div>
+                                    <button class="view-details-btn">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="recommendation-item">
+                                <div class="recommendation-header">
+                                    <div>
+                                        <h3 class="recommendation-crop">Cotton 🌿</h3>
+                                        <span class="status-success">Suitable</span>
+                                    </div>
+                                    <div class="recommendation-revenue">
+                                        <div class="revenue-amount">₹38,000 per hectare</div>
+                                        <div class="revenue-label">Expected Revenue</div>
+                                    </div>
+                                </div>
+                                <div class="recommendation-footer">
+                                    <div class="recommendation-details">
+                                        <span class="detail">Season: Kharif</span>
+                                        <span class="detail">Confidence: 88%</span>
+                                    </div>
+                                    <button class="view-details-btn">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="recommendation-item">
+                                <div class="recommendation-header">
+                                    <div>
+                                        <h3 class="recommendation-crop">Soybean 🌱</h3>
+                                        <span class="status-warning">Moderately Suitable</span>
+                                    </div>
+                                    <div class="recommendation-revenue">
+                                        <div class="revenue-amount">₹32,000 per hectare</div>
+                                        <div class="revenue-label">Expected Revenue</div>
+                                    </div>
+                                </div>
+                                <div class="recommendation-footer">
+                                    <div class="recommendation-details">
+                                        <span class="detail">Season: Kharif</span>
+                                        <span class="detail">Confidence: 75%</span>
+                                    </div>
+                                    <button class="view-details-btn">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-secondary" onclick="hideRecommendations()">Get New Recommendations</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="showDashboard()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="7" height="9" x="3" y="3" rx="1"></rect>
+                <rect width="7" height="5" x="14" y="3" rx="1"></rect>
+                <rect width="7" height="9" x="14" y="12" rx="1"></rect>
+                <rect width="7" height="5" x="3" y="16" rx="1"></rect>
+            </svg>
+            <span>Home</span>
+        </button>
+        
+        <button class="nav-item" onclick="showFertilizer()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 10v12"></path>
+                <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"></path>
+            </svg>
+            <span>Fertilizer</span>
+        </button>
+        
+        <button class="nav-item" onclick="showScanner()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 12 4 12"></path>
+                <path d="M4 8 9 8"></path>
+                <path d="M4 16 9 16"></path>
+                <path d="M14 12 20 12"></path>
+                <path d="M20 8 15 8"></path>
+                <path d="M20 16 15 16"></path>
+            </svg>
+            <span>Scanner</span>
+        </button>
+        
+        <button class="nav-item" onclick="showPrices()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 3v18h18"></path>
+                <path d="m19 9-5 5-4-4-3 3"></path>
+            </svg>
+            <span>Prices</span>
+        </button>
+        
+        <button class="nav-item" onclick="openAI()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
+            </svg>
+            <span>AI</span>
+        </button>
+    </nav>
+
+    <script src="script.js"></script>
+</body>
+</html>
