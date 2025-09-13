@@ -11,6 +11,11 @@ import { GeminiModal } from '@/components/GeminiModal';
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [isGeminiOpen, setIsGeminiOpen] = useState(false);
+  const [geminiContext, setGeminiContext] = useState<{
+    diseaseName: string;
+    plantName: string;
+    confidence: number;
+  } | undefined>(undefined);
  
   useEffect(() => {
     if (activeView === 'ai') {
@@ -28,7 +33,10 @@ const Index = () => {
       case 'fertilizer':
         return <FertilizerAdvisor />;
       case 'scanner':
-        return <PestDetection onOpenGemini={() => setIsGeminiOpen(true)} />;
+        return <PestDetection onOpenGemini={(context) => {
+          setGeminiContext(context);
+          setIsGeminiOpen(true);
+        }} />;
       case 'prices':
         return <MarketPrices />;
       case 'ai':
@@ -49,7 +57,13 @@ const Index = () => {
       <BottomNavigation activeView={activeView} onNavigate={setActiveView} />
       
       {isGeminiOpen && (
-        <GeminiModal onClose={() => setIsGeminiOpen(false)} />
+        <GeminiModal 
+          onClose={() => {
+            setIsGeminiOpen(false);
+            setGeminiContext(undefined);
+          }} 
+          diseaseContext={geminiContext}
+        />
       )}
     </div>
   );

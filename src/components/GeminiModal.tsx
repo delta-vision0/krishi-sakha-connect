@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, Bot, User } from 'lucide-react';
+import { X, Send, Bot, User, AlertCircle } from 'lucide-react';
+import { GeminiService } from '@/services/gemini';
 
 interface GeminiModalProps {
   onClose: () => void;
+  diseaseContext?: {
+    diseaseName: string;
+    plantName: string;
+    confidence: number;
+  };
 }
 
 interface Message {
@@ -12,17 +18,32 @@ interface Message {
   timestamp: Date;
 }
 
-export const GeminiModal = ({ onClose }: GeminiModalProps) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: "Hello! I'm your AI farming assistant. I can help you with crop advice, pest management, fertilizer recommendations, and answer any farming-related questions. How can I assist you today?",
-      sender: 'gemini',
-      timestamp: new Date()
-    }
-  ]);
+export const GeminiModal = ({ onClose, diseaseContext }: GeminiModalProps) => {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initialize messages based on disease context
+  useEffect(() => {
+    if (diseaseContext) {
+      const initialMessage: Message = {
+        id: '1',
+        text: `I've detected a potential disease: "${diseaseContext.diseaseName}" on ${diseaseContext.plantName} (${diseaseContext.confidence}% confidence). I can provide detailed treatment advice, prevention strategies, and management recommendations. What specific information would you like about this disease?`,
+        sender: 'gemini',
+        timestamp: new Date()
+      };
+      setMessages([initialMessage]);
+    } else {
+      const initialMessage: Message = {
+        id: '1',
+        text: "Hello! I'm your AI farming assistant powered by Gemini. I can help you with crop advice, pest management, fertilizer recommendations, and answer any farming-related questions. How can I assist you today?",
+        sender: 'gemini',
+        timestamp: new Date()
+      };
+      setMessages([initialMessage]);
+    }
+  }, [diseaseContext]);
 
   // Disable body scroll when modal is open
   useEffect(() => {
@@ -32,8 +53,8 @@ export const GeminiModal = ({ onClose }: GeminiModalProps) => {
     };
   }, []);
 
-  const handleSendMessage = () => {
-    if (!inputText.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isTyping) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -45,41 +66,44 @@ export const GeminiModal = ({ onClose }: GeminiModalProps) => {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsTyping(true);
+    setError(null);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      let response: string;
+      
+      if (diseaseContext && inputText.toLowerCase().includes('disease')) {
+        // If we have disease context and user is asking about disease, use specialized function
+        response = await GeminiService.getDiseaseAdvice(
+          diseaseContext.diseaseName,
+          diseaseContext.plantName,
+          `User question: ${inputText}`
+        );
+      } else {
+        // General farming advice
+        response = await GeminiService.getGeneralFarmingAdvice(inputText);
+      }
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: getAIResponse(inputText),
+        text: response,
         sender: 'gemini',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, aiResponse]);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to get response from Gemini. Please try again.');
+      const errorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        text: "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again in a moment.",
+        sender: 'gemini',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorResponse]);
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
-  const getAIResponse = (userInput: string): string => {
-    const input = userInput.toLowerCase();
-    
-    if (input.includes('pest') || input.includes('disease') || input.includes('insect')) {
-      return "For pest management, I recommend integrated pest management (IPM) practices. Start with organic methods like neem oil, introduce beneficial insects, and maintain crop rotation. For specific diseases, proper field sanitation and timely application of appropriate fungicides can be very effective. Would you like specific advice for a particular crop?";
-    }
-    
-    if (input.includes('fertilizer') || input.includes('nutrient')) {
-      return "Fertilizer recommendations depend on your crop, soil type, and growth stage. Generally, NPK ratios should be adjusted based on soil testing. For example, leafy vegetables need more nitrogen, while flowering crops need phosphorus. Always test your soil pH first - most crops prefer 6.0-7.5 pH range. What crop are you planning to fertilize?";
-    }
-    
-    if (input.includes('weather') || input.includes('rain') || input.includes('irrigation')) {
-      return "Weather plays a crucial role in farming decisions. During monsoon, ensure proper drainage to prevent waterlogging. In dry spells, focus on drip irrigation and mulching to conserve moisture. I recommend checking weather forecasts regularly and planning field activities accordingly. Do you need advice for specific weather conditions?";
-    }
-    
-    if (input.includes('crop') || input.includes('plant') || input.includes('grow')) {
-      return "Crop selection should be based on your local climate, soil type, water availability, and market demand. Consider crop rotation to maintain soil health. For Maharashtra's climate, crops like cotton, sugarcane, soybean, and various vegetables perform well. What's your farm size and location? I can give more specific recommendations.";
-    }
-    
-    return "That's a great farming question! Based on agricultural best practices, I'd recommend consulting with local agricultural experts and considering factors like soil testing, climate conditions, and market prices. Could you provide more specific details about your farming situation so I can give you more targeted advice?";
-  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -109,6 +133,14 @@ export const GeminiModal = ({ onClose }: GeminiModalProps) => {
             <X size={20} />
           </button>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <span className="text-sm text-red-700">{error}</span>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">

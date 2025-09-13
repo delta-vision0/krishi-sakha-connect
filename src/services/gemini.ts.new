@@ -1,0 +1,226 @@
+const API_KEY = "AIzaSyCLBKeyt3NGyoL4JxNfYoo_mlgUGcOvqzU";
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+
+export interface GeminiMessage {
+  role: 'user' | 'model';
+  parts: Array<{
+    text?: string;
+    inlineData?: {
+      mimeType: string;
+      data: string;
+    };
+  }>;
+}
+
+export interface DiseaseDetectionResult {
+  plantName: string;
+  scientificName?: string;
+  family?: string;
+  isHealthy: boolean;
+  confidence: number;
+  diseases: Array<{
+    name: string;
+    probability: number;
+    description: string;
+    symptoms: string[];
+    causes: string[];
+    treatment: {
+      organic: string[];
+      chemical: string[];
+    };
+    prevention: string[];
+  }>;
+  plantDetails: {
+    commonNames: string[];
+    description: string;
+    careInstructions: string[];
+  };
+}
+
+export interface GeminiResponse {
+  candidates: Array<{
+    content: {
+      parts: Array<{
+        text: string;
+      }>;
+    };
+    finishReason: string;
+    safetyRatings: Array<{
+      category: string;
+      probability: string;
+    }>;
+  }>;
+  usageMetadata: {
+    promptTokenCount: number;
+    candidatesTokenCount: number;
+    totalTokenCount: number;
+  };
+}
+
+export const fileToBase64 = async (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result.split(',')[1]);
+      } else {
+        reject(new Error('Failed to convert file to base64'));
+      }
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
+export class GeminiService {
+  private static async makeRequest(messages: GeminiMessage[]): Promise<GeminiResponse> {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: messages,
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+          topP: 0.95,
+          topK: 40,
+        },
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+    }
+
+    return response.json();
+  }
+
+  static async detectPlantDisease(base64Image: string, plantName: string, mimeType: string = 'image/jpeg'): Promise<DiseaseDetectionResult> {
+    try {
+      const prompt = `Analyze this image of a ${plantName} plant and provide a detailed analysis in JSON format. The plant image shows potential disease symptoms or pest damage.
+
+Format your response EXACTLY as this JSON structure (no additional text or formatting):
+{
+  "plantName": "${plantName}",
+  "scientificName": "string",
+  "family": "string",
+  "isHealthy": boolean,
+  "confidence": number (0-100),
+  "diseases": [{
+    "name": "string",
+    "probability": number (0-100),
+    "description": "string",
+    "symptoms": ["string"],
+    "causes": ["string"],
+    "treatment": {
+      "organic": ["string"],
+      "chemical": ["string"]
+    },
+    "prevention": ["string"]
+  }],
+  "plantDetails": {
+    "commonNames": ["string"],
+    "description": "string",
+    "careInstructions": ["string"]
+  }
+}
+
+Provide detailed disease information if detected, or indicate plant health with isHealthy=true if no issues found.`;
+
+      const messages: GeminiMessage[] = [{
+        role: 'user',
+        parts: [
+          { text: prompt },
+          { 
+            inlineData: {
+              mimeType: mimeType,
+              data: base64Image
+            }
+          }
+        ]
+      }];
+
+      const response = await this.makeRequest(messages);
+      
+      if (!response.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error('Invalid response format from Gemini API');
+      }
+
+      const responseText = response.candidates[0].content.parts[0].text;
+      
+      // Clean the response and extract JSON
+      const cleanText = responseText.replace(/```json\s*|\s*```/g, '').trim();
+      const match = cleanText.match(/\{[\s\S]*\}/);
+      if (!match) {
+        throw new Error('Invalid JSON response format');
+      }
+
+      const result = JSON.parse(match[0]) as DiseaseDetectionResult;
+
+      // Ensure required fields have default values
+      return {
+        plantName: result.plantName || plantName,
+        scientificName: result.scientificName || '',
+        family: result.family || '',
+        isHealthy: result.isHealthy ?? false,
+        confidence: result.confidence || 0,
+        diseases: result.diseases || [],
+        plantDetails: {
+          commonNames: result.plantDetails?.commonNames || [],
+          description: result.plantDetails?.description || '',
+          careInstructions: result.plantDetails?.careInstructions || []
+        }
+      };
+
+    } catch (error) {
+      console.error('Error in plant disease detection:', error);
+      
+      // Return a fallback error result
+      return {
+        plantName: plantName || 'Unknown Plant',
+        scientificName: '',
+        family: '',
+        isHealthy: false,
+        confidence: 0,
+        diseases: [{
+          name: 'Analysis Failed',
+          probability: 0,
+          description: 'Unable to analyze the image. Please try again with a clearer photo.',
+          symptoms: [],
+          causes: [],
+          treatment: {
+            organic: ['Try taking a clearer photo with better lighting'],
+            chemical: []
+          },
+          prevention: []
+        }],
+        plantDetails: {
+          commonNames: [],
+          description: 'Unable to identify plant due to analysis error.',
+          careInstructions: ['Please try uploading a clearer image']
+        }
+      };
+    }
+  }
+}

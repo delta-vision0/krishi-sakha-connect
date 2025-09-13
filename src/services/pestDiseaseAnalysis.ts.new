@@ -1,0 +1,102 @@
+import { GeminiService, fileToBase64, DiseaseDetectionResult } from './gemini';
+
+export interface DiseaseAnalysisResult {
+  identification: {
+    isHealthy: boolean;
+    diseaseName: string;
+    scientificName: string;
+    confidenceScore: number;
+    shortDescription: string;
+  };
+  solutionTabs: {
+    aboutDisease: { title: string; content: Array<{ heading: string; text: string }> };
+    organicSolutions: { title: string; content: Array<{ heading: string; text: string }> };
+    chemicalSolutions: { title: string; content: Array<{ heading: string; text: string }> };
+    preventiveMeasures: { title: string; content: Array<{ heading: string; text: string }> };
+  };
+}
+
+export async function analyzePlantDisease(file: File, plantName: string, location = 'Ichalkaranji, Maharashtra, India'): Promise<DiseaseAnalysisResult> {
+  if (!file) throw new Error('No image file provided');
+  if (!plantName) throw new Error('Plant name is required');
+  if (!file.type.startsWith('image/')) throw new Error('Invalid file type. Please upload an image file.');
+  if (file.size > 5 * 1024 * 1024) throw new Error('Image too large. Please use an image under 5MB.');
+
+  try {
+    const base64 = await fileToBase64(file);
+    const result = await GeminiService.detectPlantDisease(base64, plantName, file.type);
+    
+    // Convert the Gemini result to our frontend format
+    return convertToAnalysisResult(result);
+  } catch (error) {
+    console.error('Error analyzing plant disease:', error);
+    throw error instanceof Error ? error : new Error('Failed to analyze plant disease');
+  }
+}
+
+function convertToAnalysisResult(result: DiseaseDetectionResult): DiseaseAnalysisResult {
+  const firstDisease = result.diseases && result.diseases[0];
+  const isHealthy = result.isHealthy || !firstDisease;
+
+  return {
+    identification: {
+      isHealthy,
+      diseaseName: isHealthy ? 'Healthy' : (firstDisease?.name || 'Unknown'),
+      scientificName: result.scientificName || '',
+      confidenceScore: result.confidence / 100,
+      shortDescription: isHealthy
+        ? result.plantDetails.description || 'The plant appears healthy.'
+        : (firstDisease?.description || 'Possible disease detected.')
+    },
+    solutionTabs: {
+      aboutDisease: {
+        title: 'About the Disease',
+        content: [
+          {
+            heading: 'What is it?',
+            text: firstDisease?.description || 'No disease detected.'
+          },
+          {
+            heading: 'Symptoms',
+            text: firstDisease?.symptoms.join('\n') || 'No symptoms found.'
+          },
+          {
+            heading: 'Causes',
+            text: firstDisease?.causes.join('\n') || 'No specific causes identified.'
+          }
+        ]
+      },
+      organicSolutions: {
+        title: 'Organic Solutions',
+        content: [
+          {
+            heading: 'Natural Treatments',
+            text: firstDisease?.treatment.organic.join('\n') || 'No organic treatments needed.'
+          }
+        ]
+      },
+      chemicalSolutions: {
+        title: 'Chemical Solutions',
+        content: [
+          {
+            heading: 'Chemical Treatments',
+            text: firstDisease?.treatment.chemical.join('\n') || 'No chemical treatments needed.'
+          }
+        ]
+      },
+      preventiveMeasures: {
+        title: 'Prevention',
+        content: [
+          {
+            heading: 'Preventive Measures',
+            text: firstDisease?.prevention.join('\n') || 'Continue good plant care practices.'
+          },
+          {
+            heading: 'Care Instructions',
+            text: result.plantDetails.careInstructions.join('\n') || 'Follow general plant care guidelines.'
+          }
+        ]
+      }
+    }
+  };
+}
