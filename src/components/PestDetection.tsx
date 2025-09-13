@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, Upload, Zap, Leaf, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { analyzePlantDisease, DiseaseAnalysisResult } from '@/services/pestDiseaseAnalysis';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,12 +11,42 @@ interface PestDetectionProps {
   }) => void;
 }
 
-export const PestDetection = ({ onOpenGemini }: PestDetectionProps) => {
+export function PestDetection({ onOpenGemini }: PestDetectionProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [plantName, setPlantName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DiseaseAnalysisResult | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState<string>('');
+
+  const loadingMessages = [
+    "Scanning leaf structure and patterns...",
+    "Analyzing tissue health and coloration...",
+    "Identifying potential disease indicators...",
+    "Checking against known plant conditions...",
+    "Preparing detailed health assessment...",
+    "Generating treatment recommendations..."
+  ];
+
+  useEffect(() => {
+    let currentIndex = 0;
+    let messageTimer: NodeJS.Timeout;
+
+    if (isLoading) {
+      const rotateMessage = () => {
+        setLoadingMessage(loadingMessages[currentIndex]);
+        currentIndex = (currentIndex + 1) % loadingMessages.length;
+      };
+
+      rotateMessage(); // Show first message immediately
+      messageTimer = setInterval(rotateMessage, 2500); // Change message every 2.5 seconds
+
+      return () => {
+        clearInterval(messageTimer);
+        setLoadingMessage('');
+      };
+    }
+  }, [isLoading]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -266,4 +296,6 @@ export const PestDetection = ({ onOpenGemini }: PestDetectionProps) => {
       </div>
     </div>
   );
-};
+}
+
+// Add this CSS to your global styles or tailwind.config.js
