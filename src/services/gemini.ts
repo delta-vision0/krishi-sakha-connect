@@ -157,35 +157,35 @@ Be specific and practical for farmers.`;
 
   static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg'): Promise<DiseaseDetectionResult> {
     try {
-      const prompt = `Analyze this image of a ${plantName} plant and provide a detailed analysis in JSON format. The plant image shows potential disease symptoms or pest damage.
+      // Modified prompt to request shorter responses
+      const prompt = `Analyze this ${plantName} plant image for diseases. Provide a BRIEF analysis in this exact JSON format (keep descriptions under 50 words each):
 
-Format your response EXACTLY as this JSON structure (no additional text or formatting):
 {
   "plantName": "${plantName}",
-  "scientificName": "string",
-  "family": "string",
+  "scientificName": "scientific name",
+  "family": "plant family",
   "isHealthy": boolean,
-  "confidence": number (0-100),
+  "confidence": number between 0-100,
   "diseases": [{
-    "name": "string",
-    "probability": number (0-100),
-    "description": "string",
-    "symptoms": ["string"],
-    "causes": ["string"],
+    "name": "disease name",
+    "probability": number between 0-100,
+    "description": "SHORT description (max 50 words)",
+    "symptoms": ["3-4 key symptoms only"],
+    "causes": ["2-3 main causes only"],
     "treatment": {
-      "organic": ["string"],
-      "chemical": ["string"]
+      "organic": ["2-3 key organic solutions"],
+      "chemical": ["1-2 key chemical solutions"]
     },
-    "prevention": ["string"]
+    "prevention": ["3-4 key prevention steps"]
   }],
   "plantDetails": {
-    "commonNames": ["string"],
-    "description": "string",
-    "careInstructions": ["string"]
+    "commonNames": ["1-2 common names only"],
+    "description": "BRIEF description (max 25 words)",
+    "careInstructions": ["3-4 essential care steps"]
   }
 }
 
-Provide detailed disease information if detected, or indicate plant health with isHealthy=true if no issues found.`;
+IMPORTANT: Keep all text fields brief and concise. Do not exceed the specified word limits.`;
 
       const messages: GeminiMessage[] = [{
         role: 'user',
@@ -202,60 +202,107 @@ Provide detailed disease information if detected, or indicate plant health with 
 
       const response = await this.makeRequest(messages);
       
-      if (!response.candidates?.[0]?.content?.parts?.[0]?.text) {
+      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!responseText) {
         throw new Error('Invalid response format from Gemini API');
       }
 
-      const responseText = response.candidates[0].content.parts[0].text;
+      // Clean and extract JSON
+      const cleanedText = responseText
+        .replace(/```json\s*|\s*```/g, '')
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/[\u2018\u2019]/g, "'")
+        .trim();
+
+      // Extract the JSON object, handling potential truncation
+      let jsonText = cleanedText;
+      const startBrace = jsonText.indexOf('{');
+      if (startBrace === -1) {
+        throw new Error('No JSON object found in response');
+      }
       
-      // Clean the response and extract JSON
-      const cleanText = responseText.replace(/```json\s*|\s*```/g, '').trim();
-      const match = cleanText.match(/\{[\s\S]*\}/);
-      if (!match) {
-        throw new Error('Invalid JSON response format');
+      // Count braces to ensure we have a complete JSON object
+      let braceCount = 0;
+      let endIndex = -1;
+      
+      for (let i = startBrace; i < jsonText.length; i++) {
+        if (jsonText[i] === '{') braceCount++;
+        if (jsonText[i] === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            endIndex = i + 1;
+            break;
+          }
+        }
       }
 
-      const result = JSON.parse(match[0]) as DiseaseDetectionResult;
+      if (braceCount !== 0 || endIndex === -1) {
+        // If JSON is truncated, try to fix it
+        jsonText = jsonText.substring(startBrace);
+        jsonText = jsonText.replace(/[^}]*$/, '') + '}}}'; // Close any open objects
+      } else {
+        jsonText = jsonText.substring(startBrace, endIndex);
+      }
 
-      // Ensure required fields have default values
-      return {
-        plantName: result.plantName || plantName,
-        scientificName: result.scientificName || '',
-        family: result.family || '',
-        isHealthy: result.isHealthy ?? false,
-        confidence: result.confidence || 0,
-        diseases: result.diseases || [],
-        plantDetails: {
-          commonNames: result.plantDetails?.commonNames || [],
-          description: result.plantDetails?.description || '',
-          careInstructions: result.plantDetails?.careInstructions || []
-        }
-      };
+      try {
+        const result = JSON.parse(jsonText) as DiseaseDetectionResult;
+        
+        // Validate and normalize the result
+        return {
+          plantName: result.plantName || plantName,
+          scientificName: result.scientificName || 'Not specified',
+          family: result.family || 'Not specified',
+          isHealthy: Boolean(result.isHealthy),
+          confidence: Number(result.confidence) || 70,
+          diseases: (result.diseases || []).map(disease => ({
+            name: disease.name || 'Unknown Disease',
+            probability: Number(disease.probability) || 70,
+            description: disease.description?.substring(0, 200) || 'No description available',
+            symptoms: (disease.symptoms || []).slice(0, 4),
+            causes: (disease.causes || []).slice(0, 3),
+            treatment: {
+              organic: (disease.treatment?.organic || []).slice(0, 3),
+              chemical: (disease.treatment?.chemical || []).slice(0, 2)
+            },
+            prevention: (disease.prevention || []).slice(0, 4)
+          })),
+          plantDetails: {
+            commonNames: (result.plantDetails?.commonNames || [plantName]).slice(0, 2),
+            description: result.plantDetails?.description?.substring(0, 100) || 'Description not available',
+            careInstructions: (result.plantDetails?.careInstructions || ['Basic care recommended']).slice(0, 4)
+          }
+        };
+
+      } catch (parseError) {
+        console.error('Parse Error. Attempted to parse:', jsonText);
+        throw parseError;
+      }
 
     } catch (error) {
       console.error('Error in plant disease detection:', error);
-      
-      // Return a fallback result if API fails
+      // Return fallback result as before
       return {
-        plantName: 'Unknown Plant',
+        plantName,
+        scientificName: 'Unknown',
+        family: 'Unknown',
         isHealthy: false,
         confidence: 0,
         diseases: [{
           name: 'Analysis Failed',
           probability: 0,
-          description: 'Unable to analyze the image. Please try again with a clearer photo.',
-          symptoms: [],
-          causes: [],
+          description: 'Unable to complete analysis',
+          symptoms: ['Analysis failed'],
+          causes: ['Processing error'],
           treatment: {
-            organic: ['Try taking a clearer photo with better lighting'],
+            organic: ['Try again with a clearer image'],
             chemical: []
           },
-          prevention: []
+          prevention: ['Ensure good image quality']
         }],
         plantDetails: {
-          commonNames: [],
-          description: 'Unable to identify plant due to analysis error.',
-          careInstructions: ['Please try uploading a clearer image']
+          commonNames: [plantName],
+          description: 'Analysis failed',
+          careInstructions: ['Please try again']
         }
       };
     }
