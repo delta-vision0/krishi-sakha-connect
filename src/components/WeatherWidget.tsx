@@ -38,35 +38,6 @@ export const WeatherWidget = () => {
 
 	const apiBase = useMemo(() => 'https://api.openweathermap.org', []);
 
-	// Add useEffect back for weather fetching
-	useEffect(() => {
-		const fetchCurrent = async () => {
-			if (!coords) return;
-			setIsLoading(true);
-			setError(null);
-			try {
-				const resp = await fetch(`${apiBase}/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`);
-				if (!resp.ok) throw new Error('Failed to fetch weather');
-				const data = await resp.json();
-				const w: WeatherData = {
-					tempCelsius: Math.round(data.main.temp),
-					humidityPercent: data.main.humidity,
-					windSpeedKmh: formatWindSpeedToKmh(data.wind.speed),
-					description: data.weather?.[0]?.description ?? '—',
-					icon: data.weather?.[0]?.icon ?? null,
-					city: data.name ?? 'Unknown',
-					country: data.sys?.country ?? null,
-				};
-				setWeather(w);
-		} catch (e: unknown) {
-			setError(e instanceof Error ? e.message : 'Error fetching weather');
-			} finally {
-				setIsLoading(false);
-			}
-		};
-		fetchCurrent();
-	}, [coords, apiBase]);
-
 	useEffect(() => {
 		const fetchCurrent = async () => {
 			if (!coords) return;
