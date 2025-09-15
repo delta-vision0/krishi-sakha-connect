@@ -72,24 +72,32 @@ export interface GeminiResponse {
 }
 
 const getLanguageInstructions = (language: string): string => {
-  switch (language) {
-    case 'mr':
-      return `IMPORTANT: Respond in MARATHI language. Use local Marathi terms for disease names and symptoms that farmers actually use in Maharashtra. For example:
-      - Use "पिकावरील तुषार रोग" instead of just translating "late blight"
-      - Use "पानावरील करपा" for leaf spot
-      - Use actual Marathi farming terminology that farmers understand
-      - All descriptions, symptoms, treatments should be in Marathi
-      - Plant names should be in Marathi (e.g., "बटाटे" for potato, "टोमॅटो" for tomato)`;
-    case 'hi':
-      return `IMPORTANT: Respond in HINDI language. Use local Hindi terms for disease names and symptoms that farmers actually use in India. For example:
-      - Use "पछेती अंगमारी" for late blight
-      - Use "पत्ती धब्बा रोग" for leaf spot
-      - Use actual Hindi farming terminology that farmers understand
-      - All descriptions, symptoms, treatments should be in Hindi
-      - Plant names should be in Hindi (e.g., "आलू" for potato, "टमाटर" for tomato)`;
-    default:
-      return 'Respond in English with standard agricultural terminology.';
-  }
+  const map: Record<string, string> = {
+    en: 'Respond ONLY in ENGLISH. Do not include any other language.',
+    hi: 'Respond ONLY in HINDI. Use farmer-friendly Indian Hindi terms. No English.',
+    mr: 'Respond ONLY in MARATHI. Use farmer-friendly Marathi terms. No English.',
+    bn: 'Respond ONLY in BENGALI (বাংলা). No English.',
+    ta: 'Respond ONLY in TAMIL (தமிழ்). No English.',
+    te: 'Respond ONLY in TELUGU (తెలుగు). No English.',
+    gu: 'Respond ONLY in GUJARATI (ગુજરાતી). No English.',
+    kn: 'Respond ONLY in KANNADA (ಕನ್ನಡ). No English.',
+    ml: 'Respond ONLY in MALAYALAM (മലയാളം). No English.',
+    pa: 'Respond ONLY in PUNJABI (ਪੰਜਾਬੀ). No English.',
+    or: 'Respond ONLY in ODIA (ଓଡିଆ). No English.',
+    as: 'Respond ONLY in ASSAMESE (অসমীয়া). No English.',
+    ur: 'Respond ONLY in URDU (اُردُو). No English.',
+    ks: 'Respond ONLY in KASHMIRI. No English.',
+    kok: 'Respond ONLY in KONKANI (कोंकणी). No English.',
+    sd: 'Respond ONLY in SINDHI (سنڌي). No English.',
+    sa: 'Respond ONLY in SANSKRIT (संस्कृतम्). No English.',
+    ne: 'Respond ONLY in NEPALI (नेपाली). No English.',
+    mni: 'Respond ONLY in MANIPURI. No English.',
+    mai: 'Respond ONLY in MAITHILI (मैथिली). No English.',
+    doi: 'Respond ONLY in DOGRI (डोगरी). No English.',
+    sat: 'Respond ONLY in SANTALI (ᱥᱟᱱᱛᱟᱲᱤ). No English.',
+    brx: 'Respond ONLY in BODO. No English.',
+  };
+  return map[language] || map.en;
 };
 
 export class GeminiService {
@@ -161,7 +169,9 @@ export class GeminiService {
     
     const languageInstruction = getLanguageInstructions(currentLanguage);
     const prompt = `${languageInstruction}
-    
+
+You MUST write 100% of the response in the specified language. Do NOT mix languages.
+
 Please provide comprehensive advice for treating and managing this plant disease. Include:
 1. Disease description and symptoms
 2. Causes and conditions that favor the disease

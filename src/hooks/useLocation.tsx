@@ -13,6 +13,8 @@ interface LocationState {
 	useGPS: () => void;
 	setCityByName: (city: string) => Promise<void>;
 	setCoordsManually: (coords: Coordinates, label?: string) => void;
+	suggestCities: (q: string) => Promise<Array<{ name: string; state?: string; country?: string; lat: number; lon: number }>>;
+	selectPlace: (p: { name: string; state?: string; country?: string; lat: number; lon: number }) => void;
 }
 
 const OPENWEATHER_API_KEY = (import.meta as { env?: { VITE_OPENWEATHER_API_KEY?: string } })?.env?.VITE_OPENWEATHER_API_KEY || '550d5df798ec07825372f430151ec5ab';
@@ -57,6 +59,19 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 		}
 	}, [apiBase]);
 
+	const reverseGeocode = useCallback(async (c: Coordinates): Promise<string> => {
+		try {
+			const resp = await fetch(`${apiBase}/geo/1.0/reverse?lat=${c.latitude}&lon=${c.longitude}&limit=1&appid=${OPENWEATHER_API_KEY}`);
+			if (!resp.ok) return 'Unknown';
+			const data = await resp.json();
+			const place = Array.isArray(data) && data[0];
+			if (!place) return 'Unknown';
+			return `${place.name}${place.state ? ', ' + place.state : ''}${place.country ? ', ' + place.country : ''}`;
+		} catch {
+			return 'Unknown';
+		}
+	}, [apiBase]);
+
 	const useGPS = useCallback(() => {
 		if (!('geolocation' in navigator)) {
 			setError('Geolocation not supported by this browser');
@@ -66,18 +81,22 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 		navigator.geolocation.getCurrentPosition(
 			(pos) => {
 				const { latitude, longitude } = pos.coords;
-				setCoords({ latitude, longitude });
-				setLabel('My Location');
-				localStorage.setItem('location:coords', JSON.stringify({ latitude, longitude }));
-				localStorage.setItem('location:label', 'My Location');
-				setIsResolving(false);
+				const c = { latitude, longitude };
+				setCoords(c);
+				(async () => {
+					const l = await reverseGeocode(c);
+					setLabel(l);
+					localStorage.setItem('location:coords', JSON.stringify(c));
+					localStorage.setItem('location:label', l);
+					setIsResolving(false);
+				})();
 			},
 			(err) => {
 				setIsResolving(false);
 				setError(err.message || 'Unable to get current location');
 			}
 		);
-	}, []);
+	}, [reverseGeocode]);
 
 	useEffect(() => {
 		const storedCoords = localStorage.getItem('location:coords');
@@ -98,11 +117,15 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 			navigator.geolocation.getCurrentPosition(
 				(pos) => {
 					const { latitude, longitude } = pos.coords;
-					setCoords({ latitude, longitude });
-					setLabel('My Location');
-					localStorage.setItem('location:coords', JSON.stringify({ latitude, longitude }));
-					localStorage.setItem('location:label', 'My Location');
-					setIsResolving(false);
+					const c = { latitude, longitude };
+					setCoords(c);
+					(async () => {
+						const l = await reverseGeocode(c);
+						setLabel(l);
+						localStorage.setItem('location:coords', JSON.stringify(c));
+						localStorage.setItem('location:label', l);
+						setIsResolving(false);
+					})();
 				},
 				(err) => {
 					setIsResolving(false);
@@ -110,6 +133,29 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 				}
 			);
 		}
+	}, [reverseGeocode]);
+
+	const suggestCities = useCallback(async (q: string) => {
+		if (!q.trim()) return [] as Array<{ name: string; state?: string; country?: string; lat: number; lon: number }>;
+		try {
+			const resp = await fetch(`${apiBase}/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=5&appid=${OPENWEATHER_API_KEY}`);
+			if (!resp.ok) return [];
+			const data = await resp.json();
+			if (!Array.isArray(data)) return [];
+			return data.map((p: any) => ({ name: p.name, state: p.state, country: p.country, lat: p.lat, lon: p.lon }));
+		} catch {
+			return [];
+		}
+	}, [apiBase]);
+
+	const selectPlace = useCallback((p: { name: string; state?: string; country?: string; lat: number; lon: number }) => {
+		const newLabel = `${p.name}${p.state ? ', ' + p.state : ''}${p.country ? ', ' + p.country : ''}`;
+		setLabel(newLabel);
+		const c = { latitude: p.lat, longitude: p.lon };
+		setCoords(c);
+		localStorage.setItem('location:coords', JSON.stringify(c));
+		localStorage.setItem('location:label', newLabel);
+		setError(null);
 	}, []);
 
 	const value = useMemo<LocationState>(() => ({
@@ -120,7 +166,9 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
 		useGPS,
 		setCityByName,
 		setCoordsManually,
-	}), [label, coords, isResolving, error, useGPS, setCityByName, setCoordsManually]);
+		suggestCities,
+		selectPlace,
+	}), [label, coords, isResolving, error, useGPS, setCityByName, setCoordsManually, suggestCities, selectPlace]);
 
 	return <LocationContext.Provider value={value}>{children}</LocationContext.Provider>;
 };

@@ -37,11 +37,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
       {/* Weather Widget */}
       <WeatherWidget />
 
-      {/* Alert Box */}
-      <AlertBox 
-        message="Heavy rain expected tomorrow. Cover your crops!"
-        type="warning"
-      />
+      {/* Alert Box removed: now shown conditionally inside WeatherWidget based on forecast */}
 
       {/* Quick Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -55,7 +51,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{t('dashboard.cropRecommendation')}</h3>
-              <p className="caption">Find best crops for your land</p>
+              <p className="caption">{t('dashboard.cards.crop.caption')}</p>
             </div>
           </div>
         </button>
@@ -70,7 +66,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{t('dashboard.fertilizer')}</h3>
-              <p className="caption">Get fertilizer recommendations</p>
+              <p className="caption">{t('dashboard.cards.fertilizer.caption')}</p>
             </div>
           </div>
         </button>
@@ -85,7 +81,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{t('dashboard.pestDetection')}</h3>
-              <p className="caption">Detect crop diseases instantly</p>
+              <p className="caption">{t('dashboard.cards.scanner.caption')}</p>
             </div>
           </div>
         </button>
@@ -100,7 +96,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{t('dashboard.marketPrices')}</h3>
-              <p className="caption">Latest crop prices</p>
+              <p className="caption">{t('dashboard.cards.prices.caption')}</p>
             </div>
           </div>
         </button>

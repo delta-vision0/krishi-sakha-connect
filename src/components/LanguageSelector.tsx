@@ -1,14 +1,34 @@
 import React from 'react';
 import { Languages } from 'lucide-react';
-import { useLanguage, Language } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const LanguageSelector = () => {
   const { language, setLanguage, t } = useLanguage();
 
-  const languages: { code: Language; name: string; nativeName: string }[] = [
-    { code: 'en', name: 'English', nativeName: 'English' },
-    { code: 'mr', name: 'Marathi', nativeName: 'मराठी' },
-    { code: 'hi', name: 'Hindi', nativeName: 'हिंदी' },
+  const languages: { code: string; name: string; nativeName: string }[] = [
+    { code: 'en', name: 'English', nativeName: t('language.english') || 'English' },
+    { code: 'hi', name: 'Hindi', nativeName: t('language.hindi') || 'हिंदी' },
+    { code: 'mr', name: 'Marathi', nativeName: t('language.marathi') || 'मराठी' },
+    { code: 'bn', name: 'Bengali', nativeName: t('language.bengali') || 'বাংলা' },
+    { code: 'ta', name: 'Tamil', nativeName: t('language.tamil') || 'தமிழ்' },
+    { code: 'te', name: 'Telugu', nativeName: t('language.telugu') || 'తెలుగు' },
+    { code: 'gu', name: 'Gujarati', nativeName: t('language.gujarati') || 'ગુજરાતી' },
+    { code: 'kn', name: 'Kannada', nativeName: t('language.kannada') || 'ಕನ್ನಡ' },
+    { code: 'ml', name: 'Malayalam', nativeName: t('language.malayalam') || 'മലയാളം' },
+    { code: 'pa', name: 'Punjabi', nativeName: t('language.punjabi') || 'ਪੰਜਾਬੀ' },
+    { code: 'or', name: 'Odia', nativeName: t('language.odia') || 'ଓଡିଆ' },
+    { code: 'as', name: 'Assamese', nativeName: t('language.assamese') || 'অসমীয়া' },
+    { code: 'ur', name: 'Urdu', nativeName: t('language.urdu') || 'اُردُو' },
+    { code: 'ks', name: 'Kashmiri', nativeName: t('language.kashmiri') || 'कॉशुर' },
+    { code: 'kok', name: 'Konkani', nativeName: t('language.konkani') || 'कोंकणी' },
+    { code: 'sd', name: 'Sindhi', nativeName: t('language.sindhi') || 'سنڌي' },
+    { code: 'sa', name: 'Sanskrit', nativeName: t('language.sanskrit') || 'संस्कृतम्' },
+    { code: 'ne', name: 'Nepali', nativeName: t('language.nepali') || 'नेपाली' },
+    { code: 'mni', name: 'Manipuri', nativeName: t('language.manipuri') || 'ꯃꯤꯇꯩ ꯂꯣꯟ' },
+    { code: 'mai', name: 'Maithili', nativeName: t('language.maithili') || 'मैथिली' },
+    { code: 'doi', name: 'Dogri', nativeName: t('language.dogri') || 'डोगरी' },
+    { code: 'sat', name: 'Santali', nativeName: t('language.santali') || 'ᱥᱟᱱᱛᱟᱲᱤ' },
+    { code: 'brx', name: 'Bodo', nativeName: t('language.bodo') || 'बरʼ' },
   ];
 
   return (

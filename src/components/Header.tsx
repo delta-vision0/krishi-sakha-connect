@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Crosshair, Loader2 } from 'lucide-react';
 import { useLocationContext } from '@/hooks/useLocation';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -6,13 +6,44 @@ import { LanguageSelector } from './LanguageSelector';
 
 export const Header = () => {
 	const { t } = useLanguage();
-	const { label, isResolving, useGPS, setCityByName, error } = useLocationContext();
+	const { label, isResolving, useGPS, setCityByName, error, suggestCities, selectPlace } = useLocationContext();
 	const [cityInput, setCityInput] = useState('');
+	const [suggestions, setSuggestions] = useState<Array<{ name: string; state?: string; country?: string; lat: number; lon: number }>>([]);
+	const [open, setOpen] = useState(false);
+	const formRef = useRef<HTMLFormElement | null>(null);
 
 	const onSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!cityInput.trim()) return;
 		await setCityByName(cityInput.trim());
+		setCityInput('');
+	};
+
+	useEffect(() => {
+		const onDocClick = (e: MouseEvent) => {
+			if (!formRef.current) return;
+			if (!formRef.current.contains(e.target as Node)) setOpen(false);
+		};
+		document.addEventListener('mousedown', onDocClick);
+		return () => document.removeEventListener('mousedown', onDocClick);
+	}, []);
+
+	useEffect(() => {
+		const id = setTimeout(async () => {
+			if (cityInput.trim().length < 2) {
+				setSuggestions([]);
+				return;
+			}
+			const res = await suggestCities(cityInput.trim());
+			setSuggestions(res);
+			setOpen(res.length > 0);
+		}, 250);
+		return () => clearTimeout(id);
+	}, [cityInput, suggestCities]);
+
+	const onPick = (s: { name: string; state?: string; country?: string; lat: number; lon: number }) => {
+		selectPlace(s);
+		setOpen(false);
 		setCityInput('');
 	};
 
@@ -34,7 +65,7 @@ export const Header = () => {
 					</div>
 				</div>
 
-				<form onSubmit={onSubmit} className="mt-3 flex items-center gap-2">
+				<form onSubmit={onSubmit} ref={formRef} className="mt-3 flex items-center gap-2 relative">
 					<input
 						type="text"
 						value={cityInput}
@@ -58,6 +89,22 @@ export const Header = () => {
 						<Crosshair className="w-4 h-4" />
 						{t('common.useGPS')}
 					</button>
+
+					{open && suggestions.length > 0 && (
+						<div className="absolute left-0 top-full mt-1 w-full sm:w-[420px] bg-white border rounded-md shadow-md max-h-72 overflow-auto z-50">
+							{suggestions.map((s, idx) => (
+								<button
+									key={`${s.name}-${s.lat}-${s.lon}-${idx}`}
+									type="button"
+									onClick={() => onPick(s)}
+									className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+								>
+									<div className="font-medium">{s.name}</div>
+									<div className="text-xs text-muted-foreground">{[s.state, s.country].filter(Boolean).join(', ')}</div>
+								</button>
+							))}
+						</div>
+					)}
 				</form>
 				{error && <div className="text-xs text-red-600 mt-1">{error}</div>}
 			</div>

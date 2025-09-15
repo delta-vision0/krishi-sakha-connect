@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type Language = 'en' | 'mr' | 'hi';
+export type Language = string;
 
 interface LanguageContextType {
   language: Language;
@@ -27,7 +27,7 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('farmingAppLanguage') as Language;
-    if (savedLanguage && ['en', 'mr', 'hi'].includes(savedLanguage)) {
+    if (savedLanguage) {
       setLanguageState(savedLanguage);
     }
   }, []);
@@ -38,7 +38,7 @@ export const LanguageProvider = ({ children }: LanguageProviderProps) => {
   };
 
   const t = (key: string): string => {
-    return translations[language]?.[key] || translations.en[key] || key;
+    return (translations as any)[language]?.[key] || translations.en[key] || key;
   };
 
   return (
@@ -66,6 +66,11 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.marketPrices': 'Market Prices',
     'dashboard.weather': 'Weather',
     'dashboard.ai': 'AI Assistant',
+    // Dashboard card captions
+    'dashboard.cards.crop.caption': 'Find best crops for your land',
+    'dashboard.cards.fertilizer.caption': 'Get fertilizer recommendations',
+    'dashboard.cards.scanner.caption': 'Detect crop diseases instantly',
+    'dashboard.cards.prices.caption': 'Latest crop prices',
     
     // Weather
     'weather.title': "Today's Weather",
@@ -149,6 +154,11 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.marketPrices': 'बाजार भाव',
     'dashboard.weather': 'हवामान',
     'dashboard.ai': 'एआय सहाय्यक',
+    // Dashboard card captions
+    'dashboard.cards.crop.caption': 'तुमच्या जमिनीसाठी सर्वोत्तम पिके शोधा',
+    'dashboard.cards.fertilizer.caption': 'खतांची शिफारस मिळवा',
+    'dashboard.cards.scanner.caption': 'पिकांचे रोग त्वरीत ओळखा',
+    'dashboard.cards.prices.caption': 'ताजे बाजार भाव',
     
     // Weather
     'weather.title': 'आजचे हवामान',
@@ -232,6 +242,11 @@ const translations: Record<Language, Record<string, string>> = {
     'dashboard.marketPrices': 'बाजार भाव',
     'dashboard.weather': 'मौसम',
     'dashboard.ai': 'एआई सहायक',
+    // Dashboard card captions
+    'dashboard.cards.crop.caption': 'आपकी जमीन के लिए सर्वोत्तम फसलें चुनें',
+    'dashboard.cards.fertilizer.caption': 'उर्वरक सिफारिशें प्राप्त करें',
+    'dashboard.cards.scanner.caption': 'फसल रोग तुरंत पहचानें',
+    'dashboard.cards.prices.caption': 'ताज़ा बाजार भाव',
     
     // Weather
     'weather.title': 'आज का मौसम',

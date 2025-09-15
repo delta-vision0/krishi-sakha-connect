@@ -138,13 +138,12 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
                 className="w-full h-64 object-cover rounded-xl"
               />
               {isLoading && (
-                <div className="absolute inset-0 bg-black/50 rounded-xl flex items-center justify-center">
-                  <div className="text-white text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-                    <p>Analyzing image with Gemini AI...</p>
-                  </div>
-                </div>
-              )}
+  <div className="absolute inset-0 bg-black/50 rounded-xl flex flex-col items-center justify-center px-4 text-center">
+    <Loader2 className="w-8 h-8 animate-spin text-white mb-3" />
+    <p className="text-white text-sm">{loadingMessage}</p>
+  </div>
+)}
+
             </div>
 
             {error && (
