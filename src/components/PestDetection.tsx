@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Upload, Zap, Leaf, Shield, Loader2, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { analyzePlantDisease, DiseaseAnalysisResult } from '@/services/pestDiseaseAnalysis';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -12,6 +13,7 @@ interface PestDetectionProps {
 }
 
 export function PestDetection({ onOpenGemini }: PestDetectionProps) {
+  const { language, t } = useLanguage();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [plantName, setPlantName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -79,7 +81,7 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
       const blob = await response.blob();
       const file = new File([blob], 'plant-image.jpg', { type: 'image/jpeg' });
 
-      const result = await analyzePlantDisease(file, plantName);
+      const result = await analyzePlantDisease(file, plantName, undefined, language);
       setAnalysisResult(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze the image. Please try again.');
@@ -103,8 +105,8 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
             <Camera className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h2 className="heading-3">Pest & Disease Scanner</h2>
-            <p className="caption">Upload a photo to detect plant diseases instantly</p>
+            <h2 className="heading-3">{t('pest.title')}</h2>
+            <p className="caption">{t('pest.subtitle')}</p>
           </div>
         </div>
 
@@ -113,11 +115,11 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
             <div className="border-2 border-dashed border-border rounded-xl p-8 mb-4 hover:border-primary/50 transition-colors">
               <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <p className="body-text text-muted-foreground mb-4">
-                Take a clear photo of the affected leaf or plant part
+                {t('pest.dragDrop')}
               </p>
               <label className="btn-primary cursor-pointer inline-flex items-center gap-2">
                 <Camera size={20} />
-                Upload Leaf Photo
+                {t('pest.uploadImage')}
                 <input 
                   type="file" 
                   accept="image/*"
@@ -165,7 +167,7 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
               <div className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Enter plant name (e.g., Tomato, Rice, Cotton)"
+                  placeholder={t('pest.plantNamePlaceholder')}
                   value={plantName}
                   onChange={(e) => setPlantName(e.target.value)}
                   className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -178,12 +180,12 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Analyzing...
+                      {t('pest.analyzing')}
                     </>
                   ) : (
                     <>
                       <Camera size={20} />
-                      Analyze Plant
+                      {t('pest.analyze')}
                     </>
                   )}
                 </button>

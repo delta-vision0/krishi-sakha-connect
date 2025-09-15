@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Cloud, Droplets, Wind, MapPin, Loader2 } from 'lucide-react';
 import { useLocationContext } from '@/hooks/useLocation';
 import { AlertBox } from './AlertBox';
@@ -27,6 +28,7 @@ const OPENWEATHER_API_KEY = (import.meta as { env?: { VITE_OPENWEATHER_API_KEY?:
 const formatWindSpeedToKmh = (metersPerSecond: number) => Math.round(metersPerSecond * 3.6);
 
 export const WeatherWidget = () => {
+	const { t } = useLanguage();
 	const { coords, label, isResolving } = useLocationContext();
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,35 @@ export const WeatherWidget = () => {
 	const [forecast, setForecast] = useState<ForecastItem[] | null>(null);
 
 	const apiBase = useMemo(() => 'https://api.openweathermap.org', []);
+
+	// Add useEffect back for weather fetching
+	useEffect(() => {
+		const fetchCurrent = async () => {
+			if (!coords) return;
+			setIsLoading(true);
+			setError(null);
+			try {
+				const resp = await fetch(`${apiBase}/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`);
+				if (!resp.ok) throw new Error('Failed to fetch weather');
+				const data = await resp.json();
+				const w: WeatherData = {
+					tempCelsius: Math.round(data.main.temp),
+					humidityPercent: data.main.humidity,
+					windSpeedKmh: formatWindSpeedToKmh(data.wind.speed),
+					description: data.weather?.[0]?.description ?? '—',
+					icon: data.weather?.[0]?.icon ?? null,
+					city: data.name ?? 'Unknown',
+					country: data.sys?.country ?? null,
+				};
+				setWeather(w);
+		} catch (e: unknown) {
+			setError(e instanceof Error ? e.message : 'Error fetching weather');
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		fetchCurrent();
+	}, [coords, apiBase]);
 
 	useEffect(() => {
 		const fetchCurrent = async () => {
@@ -76,7 +107,7 @@ export const WeatherWidget = () => {
 			for (const item of data.list as Array<{
 				dt_txt: string;
 				main: { temp_min: number; temp_max: number };
-				weather: Array<{ main: string; icon: string }>;
+				weather: Array<{ main: string; icon: string; description: string }>;
 				rain?: unknown;
 			}>) {
 				const dtTxt: string = item.dt_txt; // "YYYY-MM-DD HH:mm:ss"
@@ -128,10 +159,10 @@ export const WeatherWidget = () => {
 		<div className="krishi-card">
 			<div className="flex items-center justify-between mb-4">
 				<div>
-					<h3 className="font-semibold text-gray-800">Today's Weather</h3>
+					<h3 className="font-semibold text-gray-800">{t('weather.title')}</h3>
 					<p className="text-sm text-gray-600 flex items-center gap-1">
 						<MapPin className="w-4 h-4" />
-						{label || 'Select location'}
+						{label || t('weather.selectLocation')}
 					</p>
 				</div>
 				{(isLoading || isResolving) ? (
@@ -154,11 +185,11 @@ export const WeatherWidget = () => {
 						<div className="grid grid-cols-2 gap-4 text-sm">
 							<div className="flex items-center gap-2">
 								<Droplets className="w-4 h-4 text-blue-500" />
-								<span className="text-gray-600">Humidity: {weather.humidityPercent}%</span>
+								<span className="text-gray-600">{t('weather.humidity')}: {weather.humidityPercent}%</span>
 							</div>
 							<div className="flex items-center gap-2">
 								<Wind className="w-4 h-4 text-gray-500" />
-								<span className="text-gray-600">Wind: {weather.windSpeedKmh} km/h</span>
+								<span className="text-gray-600">{t('weather.wind')}: {weather.windSpeedKmh} km/h</span>
 							</div>
 						</div>
 					</div>
@@ -171,7 +202,7 @@ export const WeatherWidget = () => {
 							onClick={() => setShowForecast((v) => !v)}
 							className="px-3 py-2 rounded-md border"
 						>
-							{showForecast ? 'Hide 5-day forecast' : 'Show 5-day forecast'}
+							{showForecast ? t('weather.hideForecast') : t('weather.showForecast')}
 						</button>
 					</div>
 
@@ -186,20 +217,20 @@ export const WeatherWidget = () => {
 									</div>
 								))
 							) : (
-								<div className="text-sm text-muted-foreground">Loading forecast...</div>
+								<div className="text-sm text-muted-foreground">{t('common.loading')} forecast...</div>
 							)}
 						</div>
 					)}
 
 					{rainLikelySoon && (
 						<div className="mt-4">
-							<AlertBox message="Heavy rain expected soon. Cover your crops!" type="warning" />
+							<AlertBox message={t('weather.rainWarning')} type="warning" />
 						</div>
 					)}
 				</>
 			) : (
 				<div className="text-sm text-muted-foreground">
-					{(isLoading || isResolving) ? 'Loading weather...' : 'Select a location from the header to view weather.'}
+					{(isLoading || isResolving) ? t('weather.loadingWeather') : t('weather.selectLocation')}
 				</div>
 			)}
 		</div>

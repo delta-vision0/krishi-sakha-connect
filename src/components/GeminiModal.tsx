@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Send, Bot, User, AlertCircle } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { GeminiService } from '@/services/gemini';
 
 interface GeminiModalProps {
@@ -19,6 +20,7 @@ interface Message {
 }
 
 export const GeminiModal = ({ onClose, diseaseContext }: GeminiModalProps) => {
+  const { language } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -76,11 +78,12 @@ export const GeminiModal = ({ onClose, diseaseContext }: GeminiModalProps) => {
         response = await GeminiService.getDiseaseAdvice(
           diseaseContext.diseaseName,
           diseaseContext.plantName,
-          `User question: ${inputText}`
+          `User question: ${inputText}`,
+          language
         );
       } else {
         // General farming advice
-        response = await GeminiService.getGeneralFarmingAdvice(inputText);
+        response = await GeminiService.getGeneralFarmingAdvice(inputText, language);
       }
 
       const aiResponse: Message = {

@@ -71,6 +71,27 @@ export interface GeminiResponse {
   };
 }
 
+const getLanguageInstructions = (language: string): string => {
+  switch (language) {
+    case 'mr':
+      return `IMPORTANT: Respond in MARATHI language. Use local Marathi terms for disease names and symptoms that farmers actually use in Maharashtra. For example:
+      - Use "पिकावरील तुषार रोग" instead of just translating "late blight"
+      - Use "पानावरील करपा" for leaf spot
+      - Use actual Marathi farming terminology that farmers understand
+      - All descriptions, symptoms, treatments should be in Marathi
+      - Plant names should be in Marathi (e.g., "बटाटे" for potato, "टोमॅटो" for tomato)`;
+    case 'hi':
+      return `IMPORTANT: Respond in HINDI language. Use local Hindi terms for disease names and symptoms that farmers actually use in India. For example:
+      - Use "पछेती अंगमारी" for late blight
+      - Use "पत्ती धब्बा रोग" for leaf spot
+      - Use actual Hindi farming terminology that farmers understand
+      - All descriptions, symptoms, treatments should be in Hindi
+      - Plant names should be in Hindi (e.g., "आलू" for potato, "टमाटर" for tomato)`;
+    default:
+      return 'Respond in English with standard agricultural terminology.';
+  }
+};
+
 export class GeminiService {
   private static async makeRequest(messages: GeminiMessage[]): Promise<GeminiResponse> {
     const response = await fetch(API_URL, {
@@ -134,10 +155,13 @@ export class GeminiService {
     }
   }
 
-  static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string): Promise<string> {
+  static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string, language: string = 'en'): Promise<string> {
     const context = `A plant has been identified with the disease: "${diseaseName}"${plantName ? ` on ${plantName}` : ''}. ${additionalContext || ''}`;
     
-    const prompt = `Please provide comprehensive advice for treating and managing this plant disease. Include:
+    const languageInstruction = getLanguageInstructions(language);
+    const prompt = `${languageInstruction}
+    
+Please provide comprehensive advice for treating and managing this plant disease. Include:
 1. Disease description and symptoms
 2. Causes and conditions that favor the disease
 3. Immediate treatment steps (both organic and chemical options)
@@ -151,14 +175,19 @@ Be specific and practical for farmers.`;
     return this.generateResponse(prompt, context);
   }
 
-  static async getGeneralFarmingAdvice(question: string): Promise<string> {
-    return this.generateResponse(question);
+  static async getGeneralFarmingAdvice(question: string, language: string = 'en'): Promise<string> {
+    const languageInstruction = getLanguageInstructions(language);
+    const enhancedQuestion = `${languageInstruction}\n\nUser Question: ${question}\n\nProvide practical farming advice considering Indian agricultural conditions.`;
+    return this.generateResponse(enhancedQuestion);
   }
 
-  static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg'): Promise<DiseaseDetectionResult> {
+  static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg', language: string = 'en'): Promise<DiseaseDetectionResult> {
     try {
+      const languageInstructions = getLanguageInstructions(language);
       // Modified prompt to request shorter responses
       const prompt = `Analyze this ${plantName} plant image for diseases. Provide a BRIEF analysis in this exact JSON format (keep descriptions under 50 words each):
+
+${languageInstructions}
 
 {
   "plantName": "${plantName}",

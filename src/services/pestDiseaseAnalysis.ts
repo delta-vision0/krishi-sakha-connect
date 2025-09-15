@@ -28,7 +28,7 @@ async function timeoutFetch(url: string, options: RequestInit = {}, timeoutMs = 
 }
 
 // WARNING: This approach exposes your Gemini API key in the frontend. For production, use a backend proxy!
-export async function analyzePlantDisease(file: File, plantName: string, location = 'Ichalkaranji, Maharashtra, India'): Promise<DiseaseAnalysisResult> {
+export async function analyzePlantDisease(file: File, plantName: string, location = 'Ichalkaranji, Maharashtra, India', language: string = 'en'): Promise<DiseaseAnalysisResult> {
   if (!file) throw new Error('No image file provided');
   if (!plantName) throw new Error('Plant name is required');
   if (!file.type.startsWith('image/')) throw new Error('Invalid file type. Please upload an image file.');

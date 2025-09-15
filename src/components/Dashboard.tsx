@@ -1,6 +1,8 @@
 import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { WeatherWidget } from './WeatherWidget';
 import { AlertBox } from './AlertBox';
+import { LanguageSelector } from './LanguageSelector';
 import { Sprout, Droplets, TrendingUp, Camera } from 'lucide-react';
 import heroImage from '@/assets/hero-farming.jpg';
 
@@ -9,9 +11,11 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ onNavigate }: DashboardProps) => {
+  const { t } = useLanguage();
+  
   return (
     <div className="space-y-6 fade-in">
-      {/* Welcome Section with Hero Image */}
+      {/* Welcome Section with Hero Image and Language Selector */}
       <div className="krishi-card relative overflow-hidden">
         <div className="absolute inset-0">
           <img 
@@ -21,11 +25,14 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/5"></div>
         </div>
-        <div className="relative z-10">
-          <h2 className="heading-3 text-primary mb-2">Welcome, Farmer!</h2>
-          <p className="body-text text-muted-foreground mb-4">
-            Get smart recommendations for better farming
-          </p>
+        <div className="relative z-10 flex justify-between items-start">
+          <div>
+            <h2 className="heading-3 text-primary mb-2">{t('dashboard.title')}</h2>
+            <p className="body-text text-muted-foreground mb-4">
+              {t('dashboard.subtitle')}
+            </p>
+          </div>
+          <LanguageSelector />
         </div>
       </div>
 
@@ -49,7 +56,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
               <Sprout className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Crop Recommendation</h3>
+              <h3 className="font-semibold text-foreground">{t('dashboard.cropRecommendation')}</h3>
               <p className="caption">Find best crops for your land</p>
             </div>
           </div>
@@ -64,7 +71,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
               <Droplets className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Fertilizer Guide</h3>
+              <h3 className="font-semibold text-foreground">{t('dashboard.fertilizer')}</h3>
               <p className="caption">Get fertilizer recommendations</p>
             </div>
           </div>
@@ -79,7 +86,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
               <Camera className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Pest Scanner</h3>
+              <h3 className="font-semibold text-foreground">{t('dashboard.pestDetection')}</h3>
               <p className="caption">Detect crop diseases instantly</p>
             </div>
           </div>
@@ -94,7 +101,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
               <TrendingUp className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Market Prices</h3>
+              <h3 className="font-semibold text-foreground">{t('dashboard.marketPrices')}</h3>
               <p className="caption">Latest crop prices</p>
             </div>
           </div>
