@@ -16,19 +16,10 @@ export interface DiseaseAnalysisResult {
   };
 }
 
-async function timeoutFetch(url: string, options: RequestInit = {}, timeoutMs = 30000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
-}
-
-// WARNING: This approach exposes your Gemini API key in the frontend. For production, use a backend proxy!
-export async function analyzePlantDisease(file: File, plantName: string, location = 'Ichalkaranji, Maharashtra, India', language: string = 'en'): Promise<DiseaseAnalysisResult> {
+export async function analyzePlantDisease(file: File, plantName: string, location = 'Ichalkaranji, Maharashtra, India'): Promise<DiseaseAnalysisResult> {
+  // Get the current language from localStorage
+  const currentLanguage = localStorage.getItem('farmingAppLanguage') || 'en';
+  
   if (!file) throw new Error('No image file provided');
   if (!plantName) throw new Error('Plant name is required');
   if (!file.type.startsWith('image/')) throw new Error('Invalid file type. Please upload an image file.');
@@ -37,8 +28,8 @@ export async function analyzePlantDisease(file: File, plantName: string, locatio
   try {
     // Convert file to base64
     const base64 = await fileToBase64(file);
-    // Call Gemini API directly
-    const geminiResult = await GeminiService.detectPlantDisease(base64, plantName, file.type);
+    // Call Gemini API directly with language parameter
+    const geminiResult = await GeminiService.detectPlantDisease(base64, plantName, file.type, currentLanguage);
 
     // Map Gemini result to DiseaseAnalysisResult
     const firstDisease = geminiResult.diseases && geminiResult.diseases[0];

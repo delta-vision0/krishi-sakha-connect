@@ -156,9 +156,10 @@ export class GeminiService {
   }
 
   static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string, language: string = 'en'): Promise<string> {
+    const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
     const context = `A plant has been identified with the disease: "${diseaseName}"${plantName ? ` on ${plantName}` : ''}. ${additionalContext || ''}`;
     
-    const languageInstruction = getLanguageInstructions(language);
+    const languageInstruction = getLanguageInstructions(currentLanguage);
     const prompt = `${languageInstruction}
     
 Please provide comprehensive advice for treating and managing this plant disease. Include:
@@ -176,14 +177,16 @@ Be specific and practical for farmers.`;
   }
 
   static async getGeneralFarmingAdvice(question: string, language: string = 'en'): Promise<string> {
-    const languageInstruction = getLanguageInstructions(language);
+    const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
+    const languageInstruction = getLanguageInstructions(currentLanguage);
     const enhancedQuestion = `${languageInstruction}\n\nUser Question: ${question}\n\nProvide practical farming advice considering Indian agricultural conditions.`;
     return this.generateResponse(enhancedQuestion);
   }
 
   static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg', language: string = 'en'): Promise<DiseaseDetectionResult> {
     try {
-      const languageInstructions = getLanguageInstructions(language);
+      const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
+      const languageInstructions = getLanguageInstructions(currentLanguage);
       // Modified prompt to request shorter responses
       const prompt = `Analyze this ${plantName} plant image for diseases. Provide a BRIEF analysis in this exact JSON format (keep descriptions under 50 words each):
 

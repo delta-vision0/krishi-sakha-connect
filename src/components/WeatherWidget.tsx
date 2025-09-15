@@ -131,10 +131,7 @@ export const WeatherWidget = () => {
 			<div className="flex items-center justify-between mb-4">
 				<div>
 					<h3 className="font-semibold text-gray-800">{t('weather.title')}</h3>
-					<p className="text-sm text-gray-600 flex items-center gap-1">
-						<MapPin className="w-4 h-4" />
-						{label || t('weather.selectLocation')}
-					</p>
+		<p className="text-sm text-muted-foreground">{label || t('weather.selectLocation')}</p>
 				</div>
 				{(isLoading || isResolving) ? (
 					<Loader2 className="w-5 h-5 animate-spin text-blue-500" />
@@ -201,7 +198,7 @@ export const WeatherWidget = () => {
 				</>
 			) : (
 				<div className="text-sm text-muted-foreground">
-					{(isLoading || isResolving) ? t('weather.loadingWeather') : t('weather.selectLocation')}
+					{(isLoading || isResolving) ? t('weather.loadingWeather') : t('common.selectLocation')}
 				</div>
 			)}
 		</div>

@@ -81,7 +81,7 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
       const blob = await response.blob();
       const file = new File([blob], 'plant-image.jpg', { type: 'image/jpeg' });
 
-      const result = await analyzePlantDisease(file, plantName, undefined, language);
+      const result = await analyzePlantDisease(file, plantName);
       setAnalysisResult(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to analyze the image. Please try again.');
@@ -213,13 +213,20 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
                     <h3 className="font-bold text-lg">
                       Analysis Results
                     </h3>
-                    <span className={`px-2 py-1 rounded text-sm ${
-                      analysisResult.identification.isHealthy
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {Math.round(analysisResult.identification.confidenceScore * 100)}% Confident
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {analysisResult.identification.isHealthy ? (
+                        <span className="text-sm text-green-600 font-medium">{t('common.healthy')}</span>
+                      ) : (
+                        <span className="text-sm text-red-600 font-medium">{t('common.diseaseDetected')}</span>
+                      )}
+                      <span className={`px-2 py-1 rounded text-sm ${
+                        analysisResult.identification.isHealthy
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {Math.round(analysisResult.identification.confidenceScore * 100)}% Confident
+                      </span>
+                    </div>
                   </div>
 
                   <p className="text-sm mb-2">
@@ -243,10 +250,10 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
                 {!analysisResult.identification.isHealthy && (
                   <Tabs defaultValue="aboutDisease" className="w-full">
                     <TabsList className="grid w-full grid-cols-4">
-                      <TabsTrigger value="aboutDisease">About</TabsTrigger>
-                      <TabsTrigger value="organicSolutions">Organic</TabsTrigger>
-                      <TabsTrigger value="chemicalSolutions">Chemical</TabsTrigger>
-                      <TabsTrigger value="preventiveMeasures">Prevention</TabsTrigger>
+                      <TabsTrigger value="aboutDisease">{t('common.about')}</TabsTrigger>
+                      <TabsTrigger value="organicSolutions">{t('common.organicSolutions')}</TabsTrigger>
+                      <TabsTrigger value="chemicalSolutions">{t('common.chemicalSolutions')}</TabsTrigger>
+                      <TabsTrigger value="preventiveMeasures">{t('common.prevention')}</TabsTrigger>
                     </TabsList>
 
                     {Object.entries(analysisResult.solutionTabs).map(([key, tab]) => (
@@ -281,14 +288,14 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
                     className="w-full btn-primary flex items-center justify-center gap-2"
                   >
                     <Zap size={20} />
-                    Ask Gemini for More Details
+                    {t('common.askAI')}
                   </button>
 
                   <button 
                     onClick={resetAnalysis}
                     className="w-full px-4 py-2 border border-border rounded-lg hover:bg-accent transition-colors"
                   >
-                    Scan Another Plant
+                    {t('common.scanAnother')}
                   </button>
                 </div>
               </div>

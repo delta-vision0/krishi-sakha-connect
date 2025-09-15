@@ -2,7 +2,6 @@ import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { WeatherWidget } from './WeatherWidget';
 import { AlertBox } from './AlertBox';
-import { LanguageSelector } from './LanguageSelector';
 import { Sprout, Droplets, TrendingUp, Camera } from 'lucide-react';
 import heroImage from '@/assets/hero-farming.jpg';
 
@@ -25,14 +24,13 @@ export const Dashboard = ({ onNavigate }: DashboardProps) => {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/5"></div>
         </div>
-        <div className="relative z-10 flex justify-between items-start">
+        <div className="relative z-10">
           <div>
             <h2 className="heading-3 text-primary mb-2">{t('dashboard.title')}</h2>
             <p className="body-text text-muted-foreground mb-4">
               {t('dashboard.subtitle')}
             </p>
           </div>
-          <LanguageSelector />
         </div>
       </div>
 
