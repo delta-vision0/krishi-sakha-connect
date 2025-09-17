@@ -130,45 +130,45 @@ export const WeatherWidget = () => {
 		<div className="krishi-card">
 			<div className="flex items-center justify-between mb-4">
 				<div>
-					<h3 className="font-semibold text-gray-800">{t('weather.title')}</h3>
+					<h3 className="font-semibold text-foreground">{t('weather.title')}</h3>
 		<p className="text-sm text-muted-foreground">{label || t('weather.selectLocation')}</p>
 				</div>
 				{(isLoading || isResolving) ? (
-					<Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+					<Loader2 className="w-5 h-5 animate-spin text-primary" />
 				) : (
-					<Cloud className="w-8 h-8 text-blue-500" />
+					<Cloud className="w-8 h-8 text-primary" />
 				)}
 			</div>
 
 			{error && (
-				<div className="text-sm text-red-600 mb-2">{error}</div>
+				<div className="text-sm text-destructive mb-2">{error}</div>
 			)}
 
 			{weather ? (
 				<>
 					<div className="flex items-center justify-between">
-						<div className="text-4xl font-bold text-gray-800">
+						<div className="text-4xl font-bold text-foreground">
 							{weather.tempCelsius}°C
 						</div>
 						<div className="grid grid-cols-2 gap-4 text-sm">
 							<div className="flex items-center gap-2">
-								<Droplets className="w-4 h-4 text-blue-500" />
-								<span className="text-gray-600">{t('weather.humidity')}: {weather.humidityPercent}%</span>
+								<Droplets className="w-4 h-4 text-primary" />
+								<span className="text-muted-foreground">{t('weather.humidity')}: {weather.humidityPercent}%</span>
 							</div>
 							<div className="flex items-center gap-2">
-								<Wind className="w-4 h-4 text-gray-500" />
-								<span className="text-gray-600">{t('weather.wind')}: {weather.windSpeedKmh} km/h</span>
+								<Wind className="w-4 h-4 text-muted-foreground" />
+								<span className="text-muted-foreground">{t('weather.wind')}: {weather.windSpeedKmh} km/h</span>
 							</div>
 						</div>
 					</div>
-					<div className="mt-4 text-sm text-gray-600 capitalize">
+					<div className="mt-4 text-sm text-muted-foreground capitalize">
 						{weather.description}
 					</div>
 
 					<div className="mt-4 flex items-center gap-2">
 						<button
 							onClick={() => setShowForecast((v) => !v)}
-							className="px-3 py-2 rounded-md border"
+							className="px-3 py-2 rounded-md border bg-background text-foreground hover:bg-accent transition-colors"
 						>
 							{showForecast ? t('weather.hideForecast') : t('weather.showForecast')}
 						</button>
@@ -178,10 +178,10 @@ export const WeatherWidget = () => {
 						<div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-3">
 							{forecast ? (
 								forecast.slice(0, 5).map((f) => (
-									<div key={f.date} className="p-3 border rounded-md text-center">
+									<div key={f.date} className="p-3 border border-border bg-card rounded-md text-center">
 										<div className="text-xs text-muted-foreground">{f.date}</div>
-										<div className="text-sm capitalize">{f.description}</div>
-										<div className="font-semibold">{Math.round(f.min)}° / {Math.round(f.max)}°C</div>
+										<div className="text-sm capitalize text-foreground">{f.description}</div>
+										<div className="font-semibold text-foreground">{Math.round(f.min)}° / {Math.round(f.max)}°C</div>
 									</div>
 								))
 							) : (

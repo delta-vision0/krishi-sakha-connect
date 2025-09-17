@@ -3,6 +3,7 @@ import { MapPin, Crosshair, Loader2 } from 'lucide-react';
 import { useLocationContext } from '@/hooks/useLocation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageSelector } from './LanguageSelector';
+import ThemeToggle from './ThemeToggle';
 
 export const Header = () => {
 	const { t } = useLanguage();
@@ -48,7 +49,7 @@ export const Header = () => {
 	};
 
 	return (
-		<header className="sticky top-0 z-40 bg-white border-b border-border shadow-sm">
+		<header className="sticky top-0 z-40 bg-background border-b border-border shadow-sm">
 			<div className="container mx-auto px-4 py-4">
 				<div className="flex items-center justify-between gap-4">
 					<div>
@@ -56,8 +57,9 @@ export const Header = () => {
 						<p className="caption">Your Smart Farming Assistant</p>
 					</div>
 
-					<div className="flex items-center gap-4">
+					<div className="flex items-center gap-2 sm:gap-4">
 						<LanguageSelector />
+						<ThemeToggle />
 						<div className="flex items-center gap-2 text-sm text-muted-foreground">
 							<MapPin size={16} />
 							<span className="hidden sm:inline">{label || t('common.selectLocation')}</span>
@@ -91,7 +93,7 @@ export const Header = () => {
 					</button>
 
 					{open && suggestions.length > 0 && (
-						<div className="absolute left-0 top-full mt-1 w-full sm:w-[420px] bg-white border rounded-md shadow-md max-h-72 overflow-auto z-50">
+						<div className="absolute left-0 top-full mt-1 w-full sm:w-[420px] bg-card border rounded-md shadow-md max-h-72 overflow-auto z-50">
 							{suggestions.map((s, idx) => (
 								<button
 									key={`${s.name}-${s.lat}-${s.lon}-${idx}`}
