@@ -69,7 +69,7 @@ class VoiceAssistantService {
   }
 
   async startListening(): Promise<string> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!this.recognition) {
         reject(new Error('Speech recognition not supported'));
         return;
@@ -77,6 +77,14 @@ class VoiceAssistantService {
 
       if (this.isListening) {
         reject(new Error('Already listening'));
+        return;
+      }
+
+      // Request microphone permission
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (error) {
+        reject(new Error('Microphone permission denied'));
         return;
       }
 
@@ -125,12 +133,30 @@ class VoiceAssistantService {
       utterance.pitch = this.settings.pitch;
       utterance.volume = this.settings.volume;
 
-      // Try to get the preferred voice
+      // Try to get the preferred voice with better language matching
       const voices = this.synthesis.getVoices();
-      const preferredVoice = voices.find(voice => 
-        voice.lang.startsWith(this.settings.language) && 
+      const targetLang = this.languageMap[this.settings.language] || 'en-US';
+      
+      // First try exact language match with gender preference
+      let preferredVoice = voices.find(voice => 
+        voice.lang === targetLang && 
         voice.name.toLowerCase().includes(this.settings.voiceGender)
-      ) || voices.find(voice => voice.lang.startsWith(this.settings.language));
+      );
+      
+      // If not found, try language family match with gender
+      if (!preferredVoice) {
+        preferredVoice = voices.find(voice => 
+          voice.lang.startsWith(targetLang.split('-')[0]) && 
+          voice.name.toLowerCase().includes(this.settings.voiceGender)
+        );
+      }
+      
+      // If still not found, try any voice for the language
+      if (!preferredVoice) {
+        preferredVoice = voices.find(voice => 
+          voice.lang.startsWith(targetLang.split('-')[0])
+        );
+      }
 
       if (preferredVoice) {
         utterance.voice = preferredVoice;
@@ -148,8 +174,9 @@ class VoiceAssistantService {
   }
 
   getAvailableVoices(): SpeechSynthesisVoice[] {
+    const targetLang = this.languageMap[this.settings.language] || 'en-US';
     return this.synthesis.getVoices().filter(voice => 
-      voice.lang.startsWith(this.settings.language)
+      voice.lang.startsWith(targetLang.split('-')[0])
     );
   }
 

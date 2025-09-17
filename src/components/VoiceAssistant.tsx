@@ -231,8 +231,8 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onClose, onNavig
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-2xl h-[80vh] flex flex-col bg-background border-border">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-hidden">
+      <Card className="w-full max-w-2xl max-h-[90vh] h-[80vh] flex flex-col bg-background border-border overflow-hidden">
         <CardHeader className="flex-row items-center justify-between pb-4">
           <CardTitle className="flex items-center gap-2">
             <Volume2 className="w-5 h-5 text-primary" />
@@ -311,7 +311,7 @@ export const VoiceAssistant: React.FC<VoiceAssistantProps> = ({ onClose, onNavig
             </div>
           )}
 
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+          <div className="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[50vh] scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
             {messages.map((message) => (
               <div
                 key={message.id}
