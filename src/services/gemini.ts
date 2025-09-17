@@ -349,4 +349,46 @@ IMPORTANT: Keep all text fields brief and concise. Do not exceed the specified w
       };
     }
   }
+  async getFarmingAdvice(question: string, language: string = 'en'): Promise<string> {
+    const languagePrompts = {
+      'en': 'You are a helpful farming assistant. Answer questions about agriculture, crops, pests, weather, and farming techniques. Provide practical, actionable advice. Be concise and farmer-friendly.',
+      'hi': 'आप एक सहायक कृषि सलाहकार हैं। कृषि, फसलों, कीट-पतंगों, मौसम और खेती की तकनीकों के बारे में सवालों के जवाब दें। व्यावहारिक, कार्य-उन्मुख सलाह प्रदान करें। हिंदी में स्थानीय कृषि शब्दावली का उपयोग करके संक्षिप्त उत्तर दें।',
+      'mr': 'तुम्ही एक उपयुक्त शेती सल्लागार आहात। शेती, पिके, कीड-पतंग, हवामान आणि शेतीच्या तंत्रांबद्दल प्रश्नांची उत्तरे द्या। व्यावहारिक, कृती-केंद्रित सल्ला द्या. मराठीत स्थानिक शेतकी शब्दावली वापरून संक्षिप्त उत्तर द्या.'
+    };
+
+    const systemPrompt = languagePrompts[language as keyof typeof languagePrompts] || languagePrompts.en;
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `${systemPrompt}\n\nQuestion: ${question}` }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024,
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not provide an answer at this time.';
+    } catch (error) {
+      console.error('Error getting farming advice:', error);
+      throw error;
+    }
+  }
 }

@@ -7,10 +7,13 @@ import { PestDetection } from '@/components/PestDetection';
 import { MarketPrices } from '@/components/MarketPrices';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { GeminiModal } from '@/components/GeminiModal';
+import { VoiceAssistant } from '@/components/VoiceAssistant';
+import { VoiceAssistantToggle } from '@/components/VoiceAssistantToggle';
 
 const Index = () => {
   const [activeView, setActiveView] = useState('dashboard');
   const [isGeminiOpen, setIsGeminiOpen] = useState(false);
+  const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
   const [geminiContext, setGeminiContext] = useState<{
     diseaseName: string;
     plantName: string;
@@ -56,6 +59,11 @@ const Index = () => {
 
       <BottomNavigation activeView={activeView} onNavigate={setActiveView} />
       
+      <VoiceAssistantToggle 
+        onToggle={() => setIsVoiceAssistantOpen(true)}
+        isActive={isVoiceAssistantOpen}
+      />
+      
       {isGeminiOpen && (
         <GeminiModal 
           onClose={() => {
@@ -63,6 +71,13 @@ const Index = () => {
             setGeminiContext(undefined);
           }} 
           diseaseContext={geminiContext}
+        />
+      )}
+
+      {isVoiceAssistantOpen && (
+        <VoiceAssistant 
+          onClose={() => setIsVoiceAssistantOpen(false)}
+          onNavigate={setActiveView}
         />
       )}
     </div>
