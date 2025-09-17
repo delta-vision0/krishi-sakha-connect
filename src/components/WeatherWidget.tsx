@@ -3,6 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Cloud, Droplets, Wind, MapPin, Loader2 } from 'lucide-react';
 import { useLocationContext } from '@/hooks/useLocation';
 import { AlertBox } from './AlertBox';
+import { buildKey, loadForecast, saveForecast, isStale } from '@/services/weatherCache';
 
 interface WeatherData {
 	tempCelsius: number;
@@ -24,6 +25,7 @@ interface ForecastItem {
 }
 
 const OPENWEATHER_API_KEY = (import.meta as { env?: { VITE_OPENWEATHER_API_KEY?: string } })?.env?.VITE_OPENWEATHER_API_KEY || '550d5df798ec07825372f430151ec5ab';
+const MAX_AGE_MS = 1000 * 60 * 60 * 3; // 3 hours freshness window
 
 const formatWindSpeedToKmh = (metersPerSecond: number) => Math.round(metersPerSecond * 3.6);
 
@@ -33,40 +35,55 @@ export const WeatherWidget = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [weather, setWeather] = useState<WeatherData | null>(null);
-	const [showForecast, setShowForecast] = useState(false);
+  const [showForecast, setShowForecast] = useState(false);
+  const [usingCache, setUsingCache] = useState(false);
 	const [forecast, setForecast] = useState<ForecastItem[] | null>(null);
 
 	const apiBase = useMemo(() => 'https://api.openweathermap.org', []);
 
-	useEffect(() => {
-		const fetchCurrent = async () => {
-			if (!coords) return;
-			setIsLoading(true);
-			setError(null);
-			try {
-				const resp = await fetch(`${apiBase}/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`);
-				if (!resp.ok) throw new Error('Failed to fetch weather');
-				const data = await resp.json();
-				const w: WeatherData = {
-					tempCelsius: Math.round(data.main.temp),
-					humidityPercent: data.main.humidity,
-					windSpeedKmh: formatWindSpeedToKmh(data.wind.speed),
-					description: data.weather?.[0]?.description ?? '—',
-					icon: data.weather?.[0]?.icon ?? null,
-					city: data.name ?? 'Unknown',
-					country: data.sys?.country ?? null,
-				};
-				setWeather(w);
-		} catch (e: unknown) {
-			setError(e instanceof Error ? e.message : 'Error fetching weather');
-			} finally {
-				setIsLoading(false);
-			}
-		};
-		fetchCurrent();
-	}, [coords, apiBase]);
+  useEffect(() => {
+    const run = async () => {
+      if (!coords) return;
+      setIsLoading(true);
+      setError(null);
+      setUsingCache(false);
 
-	const loadForecast = async () => {
+      const key = buildKey(coords.latitude, coords.longitude);
+      const cached = loadForecast(key);
+
+      // Try network first
+      try {
+        const resp = await fetch(`${apiBase}/data/2.5/weather?lat=${coords.latitude}&lon=${coords.longitude}&appid=${OPENWEATHER_API_KEY}&units=metric`);
+        if (!resp.ok) throw new Error('Failed to fetch weather');
+        const data = await resp.json();
+        const w: WeatherData = {
+          tempCelsius: Math.round(data.main.temp),
+          humidityPercent: data.main.humidity,
+          windSpeedKmh: formatWindSpeedToKmh(data.wind.speed),
+          description: data.weather?.[0]?.description ?? '—',
+          icon: data.weather?.[0]?.icon ?? null,
+          city: data.name ?? 'Unknown',
+          country: data.sys?.country ?? null,
+        };
+        setWeather(w);
+        // Save partial current to cache while keeping existing forecast if any
+        saveForecast({ key, locationLabel: label, current: { ...w, timestamp: Date.now() }, forecast: cached?.forecast ?? null, savedAt: Date.now() });
+      } catch (e: unknown) {
+        // On failure, serve cached if available
+        if (cached?.current) {
+          setWeather({ ...cached.current });
+          setUsingCache(true);
+        } else {
+          setError(e instanceof Error ? e.message : 'Error fetching weather');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    run();
+  }, [coords, apiBase, label]);
+
+  const loadForecastData = async () => {
 		if (!coords) return;
 		setError(null);
 		try {
@@ -104,19 +121,38 @@ export const WeatherWidget = () => {
 					if (hasRainFlag) byDate[date].rainLikely = true;
 				}
 			}
-			const items = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
-			setForecast(items);
+      const items = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+      setForecast(items);
+      // save to cache
+      const key = buildKey(coords.latitude, coords.longitude);
+      saveForecast({ key, locationLabel: label, current: weather ? { ...weather, timestamp: Date.now() } : null, forecast: items, savedAt: Date.now() });
 		} catch (e: unknown) {
-			setError(e instanceof Error ? e.message : 'Error fetching forecast');
+      // On failure, try cached forecast
+      const key = buildKey(coords.latitude, coords.longitude);
+      const cached = loadForecast(key);
+      if (cached?.forecast && !isStale(cached, MAX_AGE_MS)) {
+        setForecast(cached.forecast);
+        setUsingCache(true);
+      } else {
+        setError(e instanceof Error ? e.message : 'Error fetching forecast');
+      }
 		}
 	};
 
-	useEffect(() => {
-		if (showForecast && !forecast && coords) {
-			loadForecast();
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [showForecast, coords]);
+  useEffect(() => {
+    if (showForecast && !forecast && coords) {
+      // Prefer cache immediately if fresh
+      const key = buildKey(coords.latitude, coords.longitude);
+      const cached = loadForecast(key);
+      if (cached?.forecast && !isStale(cached, MAX_AGE_MS)) {
+        setForecast(cached.forecast);
+        setUsingCache(true);
+      } else {
+        loadForecastData();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showForecast, coords]);
 
 	const rainLikelySoon = useMemo(() => {
 		if (!forecast) return false;
@@ -165,13 +201,16 @@ export const WeatherWidget = () => {
 						{weather.description}
 					</div>
 
-					<div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
 						<button
 							onClick={() => setShowForecast((v) => !v)}
 							className="px-3 py-2 rounded-md border bg-background text-foreground hover:bg-accent transition-colors"
 						>
 							{showForecast ? t('weather.hideForecast') : t('weather.showForecast')}
 						</button>
+            {usingCache && (
+              <span className="text-xs text-muted-foreground">offline cache</span>
+            )}
 					</div>
 
 					{showForecast && (
