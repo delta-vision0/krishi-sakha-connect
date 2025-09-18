@@ -12,8 +12,8 @@ export async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const API_KEY = "AIzaSyAp9Qiebv1eeTXcTG6WRJmFDjKfFFpFqLs";
-const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+// Client should not hold API keys. We call our server instead.
+const SERVER_TEXT_API = '/api/gemini/text';
 
 export interface GeminiMessage {
   role: 'user' | 'model';
@@ -101,50 +101,22 @@ const getLanguageInstructions = (language: string): string => {
 };
 
 export class GeminiService {
-  private static async makeRequest(messages: GeminiMessage[]): Promise<GeminiResponse> {
-    const response = await fetch(API_URL, {
+  private static async makeTextRequest(payload: { prompt?: string; context?: string }, options?: { signal?: AbortSignal }): Promise<string> {
+    const response = await fetch(SERVER_TEXT_API, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: messages,
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 2048,
-          topP: 0.95,
-          topK: 40,
-        },
-        safetySettings: [
-          {
-            category: 'HARM_CATEGORY_HARASSMENT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-          },
-          {
-            category: 'HARM_CATEGORY_HATE_SPEECH',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-          },
-          {
-            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-          },
-          {
-            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
-          },
-        ],
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: options?.signal,
     });
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+      throw new Error(`Gemini text API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
     }
-
-    return response.json();
+    const data = await response.json();
+    return data.text || '';
   }
 
-  private static async generateResponse(prompt: string, context: string = ''): Promise<string> {
+  private static async generateResponse(prompt: string, context: string = '', options?: { signal?: AbortSignal }): Promise<string> {
     try {
       const messages: GeminiMessage[] = [{
         role: 'user',
@@ -155,15 +127,15 @@ export class GeminiService {
         ]
       }];
 
-      const response = await this.makeRequest(messages);
-      return response.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+      const text = await this.makeTextRequest({ prompt: messages[0].parts[0].text }, { signal: options?.signal });
+      return text || 'No response generated';
     } catch (error) {
       console.error('Error generating response:', error);
       throw error instanceof Error ? error : new Error('Failed to generate response');
     }
   }
 
-  static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string, language: string = 'en'): Promise<string> {
+  static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string, language: string = 'en', options?: { signal?: AbortSignal }): Promise<string> {
     const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
     const context = `A plant has been identified with the disease: "${diseaseName}"${plantName ? ` on ${plantName}` : ''}. ${additionalContext || ''}`;
     
@@ -183,17 +155,17 @@ Please provide comprehensive advice for treating and managing this plant disease
 
 Be specific and practical for farmers.`;
 
-    return this.generateResponse(prompt, context);
+    return this.generateResponse(prompt, context, { signal: options?.signal });
   }
 
-  static async getGeneralFarmingAdvice(question: string, language: string = 'en'): Promise<string> {
+  static async getGeneralFarmingAdvice(question: string, language: string = 'en', options?: { signal?: AbortSignal }): Promise<string> {
     const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
     const languageInstruction = getLanguageInstructions(currentLanguage);
     const enhancedQuestion = `${languageInstruction}\n\nUser Question: ${question}\n\nProvide practical farming advice considering Indian agricultural conditions.`;
-    return this.generateResponse(enhancedQuestion);
+    return this.generateResponse(enhancedQuestion, '', { signal: options?.signal });
   }
 
-  static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg', language: string = 'en'): Promise<DiseaseDetectionResult> {
+  static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg', language: string = 'en', options?: { signal?: AbortSignal }): Promise<DiseaseDetectionResult> {
     try {
       const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
       const languageInstructions = getLanguageInstructions(currentLanguage);
@@ -229,22 +201,9 @@ ${languageInstructions}
 
 IMPORTANT: Keep all text fields brief and concise. Do not exceed the specified word limits.`;
 
-      const messages: GeminiMessage[] = [{
-        role: 'user',
-        parts: [
-          { text: prompt },
-          { 
-            inlineData: {
-              mimeType: mimeType,
-              data: imageBase64
-            }
-          }
-        ]
-      }];
-
-      const response = await this.makeRequest(messages);
-      
-      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      // For image analysis, we will keep using the existing server endpoint via pestDiseaseAnalysis.
+      // This method remains for compatibility when called directly, but routes through the text API is not suitable for images.
+      const responseText = await this.makeTextRequest({ prompt }, { signal: options?.signal });
       if (!responseText) {
         throw new Error('Invalid response format from Gemini API');
       }
