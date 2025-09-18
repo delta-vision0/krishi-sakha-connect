@@ -49,8 +49,8 @@ const upload = multer({
   }
 });
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI('AIzaSyCLBKeyt3NGyoL4JxNfYoo_mlgUGcOvqzU');
+// Initialize Gemini AI using env var
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 app.post('/api/analyze', upload.single('image'), async (req, res) => {
   try {
@@ -152,6 +152,38 @@ app.post('/api/analyze', upload.single('image'), async (req, res) => {
       error: 'Analysis failed',
       details: error.message 
     });
+  }
+});
+
+// Text generation endpoint (no image) - builds responses using server-held key
+app.post('/api/gemini/text', async (req, res) => {
+  try {
+    const { prompt, context } = req.body || {};
+    if (!prompt && !context) {
+      return res.status(400).json({ error: 'Missing prompt/context' });
+    }
+
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-2.5-pro',
+      generationConfig: {
+        maxOutputTokens: 2048,
+        temperature: 0.3,
+        topP: 0.95,
+        topK: 40
+      }
+    });
+
+    const parts = [];
+    if (context) parts.push(String(context));
+    if (prompt) parts.push(String(prompt));
+
+    const result = await model.generateContent(parts);
+    const response = await result.response;
+    const text = response.text() || '';
+    res.json({ text });
+  } catch (error) {
+    console.error('Error in /api/gemini/text:', error);
+    res.status(500).json({ error: 'Generation failed', details: error.message });
   }
 });
 
