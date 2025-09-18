@@ -101,7 +101,7 @@ const getLanguageInstructions = (language: string): string => {
 };
 
 export class GeminiService {
-  private static async makeRequest(messages: GeminiMessage[]): Promise<GeminiResponse> {
+  private static async makeRequest(messages: GeminiMessage[], options?: { signal?: AbortSignal }): Promise<GeminiResponse> {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
@@ -134,6 +134,7 @@ export class GeminiService {
           },
         ],
       }),
+      signal: options?.signal,
     });
 
     if (!response.ok) {
@@ -144,7 +145,7 @@ export class GeminiService {
     return response.json();
   }
 
-  private static async generateResponse(prompt: string, context: string = ''): Promise<string> {
+  private static async generateResponse(prompt: string, context: string = '', options?: { signal?: AbortSignal }): Promise<string> {
     try {
       const messages: GeminiMessage[] = [{
         role: 'user',
@@ -155,7 +156,7 @@ export class GeminiService {
         ]
       }];
 
-      const response = await this.makeRequest(messages);
+      const response = await this.makeRequest(messages, { signal: options?.signal });
       return response.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
     } catch (error) {
       console.error('Error generating response:', error);
@@ -163,7 +164,7 @@ export class GeminiService {
     }
   }
 
-  static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string, language: string = 'en'): Promise<string> {
+  static async getDiseaseAdvice(diseaseName: string, plantName?: string, additionalContext?: string, language: string = 'en', options?: { signal?: AbortSignal }): Promise<string> {
     const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
     const context = `A plant has been identified with the disease: "${diseaseName}"${plantName ? ` on ${plantName}` : ''}. ${additionalContext || ''}`;
     
@@ -183,17 +184,17 @@ Please provide comprehensive advice for treating and managing this plant disease
 
 Be specific and practical for farmers.`;
 
-    return this.generateResponse(prompt, context);
+    return this.generateResponse(prompt, context, { signal: options?.signal });
   }
 
-  static async getGeneralFarmingAdvice(question: string, language: string = 'en'): Promise<string> {
+  static async getGeneralFarmingAdvice(question: string, language: string = 'en', options?: { signal?: AbortSignal }): Promise<string> {
     const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
     const languageInstruction = getLanguageInstructions(currentLanguage);
     const enhancedQuestion = `${languageInstruction}\n\nUser Question: ${question}\n\nProvide practical farming advice considering Indian agricultural conditions.`;
-    return this.generateResponse(enhancedQuestion);
+    return this.generateResponse(enhancedQuestion, '', { signal: options?.signal });
   }
 
-  static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg', language: string = 'en'): Promise<DiseaseDetectionResult> {
+  static async detectPlantDisease(imageBase64: string, plantName: string, mimeType: string = 'image/jpeg', language: string = 'en', options?: { signal?: AbortSignal }): Promise<DiseaseDetectionResult> {
     try {
       const currentLanguage = localStorage.getItem('farmingAppLanguage') || language;
       const languageInstructions = getLanguageInstructions(currentLanguage);
@@ -242,7 +243,7 @@ IMPORTANT: Keep all text fields brief and concise. Do not exceed the specified w
         ]
       }];
 
-      const response = await this.makeRequest(messages);
+      const response = await this.makeRequest(messages, { signal: options?.signal });
       
       const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!responseText) {

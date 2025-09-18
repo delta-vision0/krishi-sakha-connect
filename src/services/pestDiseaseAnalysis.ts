@@ -16,7 +16,12 @@ export interface DiseaseAnalysisResult {
   };
 }
 
-export async function analyzePlantDisease(file: File, plantName: string, location = 'Ichalkaranji, Maharashtra, India'): Promise<DiseaseAnalysisResult> {
+export async function analyzePlantDisease(
+  file: File,
+  plantName: string,
+  location = 'Ichalkaranji, Maharashtra, India',
+  options?: { signal?: AbortSignal }
+): Promise<DiseaseAnalysisResult> {
   // Get the current language from localStorage
   const currentLanguage = localStorage.getItem('farmingAppLanguage') || 'en';
   
@@ -29,7 +34,7 @@ export async function analyzePlantDisease(file: File, plantName: string, locatio
     // Convert file to base64
     const base64 = await fileToBase64(file);
     // Call Gemini API directly with language parameter
-    const geminiResult = await GeminiService.detectPlantDisease(base64, plantName, file.type, currentLanguage);
+    const geminiResult = await GeminiService.detectPlantDisease(base64, plantName, file.type, currentLanguage, { signal: options?.signal });
 
     // Map Gemini result to DiseaseAnalysisResult
     const firstDisease = geminiResult.diseases && geminiResult.diseases[0];

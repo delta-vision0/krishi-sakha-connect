@@ -66,28 +66,43 @@ export function PestDetection({ onOpenGemini }: PestDetectionProps) {
     reader.readAsDataURL(file);
   };
 
-  const handleAnalysis = async () => {
+  useEffect(() => {
+    if (!isLoading) return;
+    if (!selectedImage || !plantName) return;
+
+    const abortController = new AbortController();
+
+    const run = async () => {
+      try {
+        const response = await fetch(selectedImage);
+        const blob = await response.blob();
+        const file = new File([blob], 'plant-image.jpg', { type: 'image/jpeg' });
+        const result = await analyzePlantDisease(file, plantName, 'Ichalkaranji, Maharashtra, India', { signal: abortController.signal });
+        if (!abortController.signal.aborted) {
+          setAnalysisResult(result);
+        }
+      } catch (err) {
+        if ((err as any)?.name === 'AbortError') return;
+        setError(err instanceof Error ? err.message : 'Failed to analyze the image. Please try again.');
+      } finally {
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    run();
+    return () => abortController.abort();
+  }, [isLoading, selectedImage, plantName]);
+
+  const handleAnalysis = () => {
     if (!selectedImage || !plantName) {
       setError('Please provide both an image and plant name');
       return;
     }
-
-    setIsLoading(true);
     setError(null);
-
-    try {
-      // Convert dataURL back to File object
-      const response = await fetch(selectedImage);
-      const blob = await response.blob();
-      const file = new File([blob], 'plant-image.jpg', { type: 'image/jpeg' });
-
-      const result = await analyzePlantDisease(file, plantName);
-      setAnalysisResult(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to analyze the image. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+    setAnalysisResult(null);
+    setIsLoading(true);
   };
 
   const resetAnalysis = () => {
