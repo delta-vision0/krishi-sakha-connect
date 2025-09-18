@@ -12,8 +12,8 @@ export async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-// Client should not hold API keys. We call our server instead.
-const SERVER_TEXT_API = '/api/gemini/text';
+const API_KEY = "AIzaSyAp9Qiebv1eeTXcTG6WRJmFDjKfFFpFqLs";
+const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
 export interface GeminiMessage {
   role: 'user' | 'model';
@@ -101,19 +101,48 @@ const getLanguageInstructions = (language: string): string => {
 };
 
 export class GeminiService {
-  private static async makeTextRequest(payload: { prompt?: string; context?: string }, options?: { signal?: AbortSignal }): Promise<string> {
-    const response = await fetch(SERVER_TEXT_API, {
+  private static async makeRequest(messages: GeminiMessage[], options?: { signal?: AbortSignal }): Promise<GeminiResponse> {
+    const response = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: messages,
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+          topP: 0.95,
+          topK: 40,
+        },
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+        ],
+      }),
       signal: options?.signal,
     });
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Gemini text API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
     }
-    const data = await response.json();
-    return data.text || '';
+
+    return response.json();
   }
 
   private static async generateResponse(prompt: string, context: string = '', options?: { signal?: AbortSignal }): Promise<string> {
@@ -127,8 +156,8 @@ export class GeminiService {
         ]
       }];
 
-      const text = await this.makeTextRequest({ prompt: messages[0].parts[0].text }, { signal: options?.signal });
-      return text || 'No response generated';
+      const response = await this.makeRequest(messages, { signal: options?.signal });
+      return response.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
     } catch (error) {
       console.error('Error generating response:', error);
       throw error instanceof Error ? error : new Error('Failed to generate response');
@@ -201,9 +230,22 @@ ${languageInstructions}
 
 IMPORTANT: Keep all text fields brief and concise. Do not exceed the specified word limits.`;
 
-      // For image analysis, we will keep using the existing server endpoint via pestDiseaseAnalysis.
-      // This method remains for compatibility when called directly, but routes through the text API is not suitable for images.
-      const responseText = await this.makeTextRequest({ prompt }, { signal: options?.signal });
+      const messages: GeminiMessage[] = [{
+        role: 'user',
+        parts: [
+          { text: prompt },
+          { 
+            inlineData: {
+              mimeType: mimeType,
+              data: imageBase64
+            }
+          }
+        ]
+      }];
+
+      const response = await this.makeRequest(messages, { signal: options?.signal });
+      
+      const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!responseText) {
         throw new Error('Invalid response format from Gemini API');
       }
