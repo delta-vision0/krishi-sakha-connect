@@ -5,6 +5,7 @@ import { CropRecommendation } from '@/components/CropRecommendation';
 import { FertilizerAdvisor } from '@/components/FertilizerAdvisor';
 import { PestDetection } from '@/components/PestDetection';
 import { MarketPrices } from '@/components/MarketPrices';
+import { UserPreferences } from '@/components/UserPreferences';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { GeminiModal } from '@/components/GeminiModal';
 import { VoiceAssistant } from '@/components/VoiceAssistant';
@@ -42,6 +43,8 @@ const Index = () => {
         }} />;
       case 'prices':
         return <MarketPrices />;
+      case 'profile':
+        return <UserPreferences onClose={() => setActiveView('dashboard')} />;
       case 'ai':
         return <Dashboard onNavigate={setActiveView} />;
       default:

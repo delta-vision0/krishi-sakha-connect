@@ -186,7 +186,21 @@
   }
   
   .nav-item {
-    @apply flex-1 flex flex-col items-center gap-1 py-2 px-2 rounded-lg transition-colors duration-200;
+    @apply flex-1 flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-colors duration-200;
+  }
+  
+  .nav-item span {
+    @apply text-xs font-medium leading-tight;
+  }
+  
+  @media (max-width: 480px) {
+    .nav-item span {
+      @apply text-[10px];
+    }
+    
+    .nav-item {
+      @apply px-0.5;
+    }
   }
   
   .nav-item.active {

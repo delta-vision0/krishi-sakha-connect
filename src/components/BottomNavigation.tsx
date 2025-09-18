@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sprout, Camera, TrendingUp, Bot } from 'lucide-react';
+import { Home, Sprout, Camera, TrendingUp, Bot, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BottomNavigationProps {
@@ -15,6 +15,7 @@ export const BottomNavigation = ({ activeView, onNavigate }: BottomNavigationPro
     { id: 'scanner', icon: Camera, label: t('nav.scanner') },
     { id: 'prices', icon: TrendingUp, label: t('nav.prices') },
     { id: 'ai', icon: Bot, label: t('nav.ai') },
+    { id: 'profile', icon: User, label: t('nav.profile') },
   ];
 
   return (

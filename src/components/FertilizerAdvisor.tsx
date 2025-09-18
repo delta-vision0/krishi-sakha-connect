@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Sprout, ChevronDown, Loader2, AlertCircle, Eye, DollarSign, Calendar, Droplets } from 'lucide-react';
 import { FertilizerRecommendationService, FertilizerData, FertilizerResponse } from '@/services/fertilizerRecommendation';
 import { useLocationContext } from '@/hooks/useLocation';
+import { useUserPreferences } from '@/contexts/UserPreferencesContext';
+import { getCropNames } from '@/services/cropData';
 
 export const FertilizerAdvisor = () => {
   const { coords, label } = useLocationContext();
+  const { preferences } = useUserPreferences();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<FertilizerResponse | null>(null);
@@ -33,10 +36,12 @@ export const FertilizerAdvisor = () => {
     preference: 'mixed'
   });
 
+  // Get crop options - prioritize user's preferred crops, then add all available crops
+  const allCrops = getCropNames();
+  const preferredCrops = preferences.preferredCrops;
   const cropOptions = [
-    'Rice', 'Wheat', 'Maize', 'Cotton', 'Sugarcane', 'Soybean', 'Groundnut',
-    'Tomato', 'Onion', 'Potato', 'Chili', 'Brinjal', 'Okra', 'Cabbage',
-    'Mango', 'Banana', 'Citrus', 'Grapes', 'Pomegranate', 'Papaya'
+    ...preferredCrops.filter(crop => allCrops.includes(crop)),
+    ...allCrops.filter(crop => !preferredCrops.includes(crop))
   ];
 
   const handleGetRecommendations = async () => {
