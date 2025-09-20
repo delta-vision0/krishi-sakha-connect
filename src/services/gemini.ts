@@ -12,7 +12,7 @@ export async function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const API_KEY = "AIzaSyCzSt0-_ZD1WTXpb8b15yX5i9YqZepq62w";
+const API_KEY = "AIzaSyDKgN0eDqenlPFNR5fwddmaaH1TEK7hZBQ";
 const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
 
 export interface GeminiMessage {
